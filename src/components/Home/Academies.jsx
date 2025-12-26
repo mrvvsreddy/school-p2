@@ -7,7 +7,7 @@ const Academies = () => {
         { id: '02', name: 'Social Sciences', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop', desc: "Analyzing society and human relationships." },
         { id: '03', name: 'Business and Management', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop', desc: "Developing strategic leadership skills." },
         { id: '04', name: 'Science and Technology', image: 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=800&auto=format&fit=crop', desc: "Pioneering innovation and discovery." },
-        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092921461-eab62e97a783?q=80&w=800&auto=format&fit=crop', desc: "Building the infrastructure of tomorrow." },
+        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop', desc: "Building the infrastructure of tomorrow." },
     ];
 
     const [activeId, setActiveId] = useState('02');

@@ -5,6 +5,7 @@ import FounderMessage from '../components/Home/FounderMessage';
 import Features from '../components/Home/Features';
 import Academies from '../components/Home/Academies';
 import News from '../components/Home/News';
+import FadeIn from '../components/UI/FadeIn';
 
 const Home = () => {
   return (
@@ -43,11 +44,11 @@ const Home = () => {
       </Helmet>
 
 
-      <Hero />
-      <FounderMessage />
-      <Features />
-      <Academies />
-      <News />
+      <FadeIn><Hero /></FadeIn>
+      <FadeIn delay={100}><FounderMessage /></FadeIn>
+      <FadeIn delay={150}><Features /></FadeIn>
+      <FadeIn delay={200}><Academies /></FadeIn>
+      <FadeIn delay={250}><News /></FadeIn>
       {/* Placeholder for Campus/Map section if needed, though covered partially in Footer/Contact */}
 
     </>

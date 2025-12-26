@@ -1,21 +1,27 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, Search } from 'lucide-react';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const location = useLocation();
+
+    React.useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const navLinks = [
         { name: 'Home', path: '/' },
         { name: 'About Us', path: '/about' },
         { name: 'Admissions', path: '/admissions' },
         { name: 'Academics', path: '/academics' },
-        { name: 'Infrastructure', path: '/infrastructure' },
+        { name: 'Facilities', path: '/facilities' },
         { name: 'Contact', path: '/contact' },
     ];
 
     return (
-        <header className="bg-white shadow-sm fixed top-0 left-0 w-full z-50 h-20">
+        <header className={`bg-white shadow-sm fixed top-0 left-0 w-full z-50 h-20 transition-transform duration-700 ease-out transform ${isMounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
             <div className="container mx-auto px-4 md:px-6 h-full flex items-center justify-between">
 
                 {/* Logo Area */}
@@ -32,21 +38,16 @@ const Header = () => {
                         <Link
                             key={link.name}
                             to={link.path}
-                            className="text-sm font-medium text-gray-700 hover:text-primary transition-colors uppercase tracking-wide"
+                            className={`text-sm font-medium transition-colors uppercase tracking-wide relative group ${location.pathname === link.path ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
                         >
                             {link.name}
+                            <span className={`absolute -bottom-1 left-0 w-full h-0.5 bg-primary transform transition-transform duration-300 ${location.pathname === link.path ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
                         </Link>
                     ))}
                 </nav>
 
-                {/* Action Buttons */}
                 <div className="hidden lg:flex items-center gap-4">
-                    <button className="text-gray-500 hover:text-primary">
-                        <Search size={20} />
-                    </button>
-                    <button className="bg-white border boundary-gray-300 text-gray-700 px-4 py-2 text-xs font-semibold uppercase tracking-wider hover:bg-gray-50 transition-colors">
-                        Virtual Tour
-                    </button>
+                    {/* Search and Tour removed as per request */}
                 </div>
 
                 {/* Mobile Menu Toggle */}

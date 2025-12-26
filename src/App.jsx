@@ -7,10 +7,13 @@ import Home from './pages/Home'
 import About from './pages/About'
 import Admissions from './pages/Admissions'
 import Academics from './pages/Academics'
-import Infrastructure from './pages/Infrastructure'
+
 import Faculty from './pages/Faculty'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
+
+import Facilities from './pages/Facilities'
+import Apply from './pages/Apply'
 
 function App() {
     return (
@@ -21,8 +24,9 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/admissions" element={<Admissions />} />
+                    <Route path="/apply" element={<Apply />} />
                     <Route path="/academics" element={<Academics />} />
-                    <Route path="/infrastructure" element={<Infrastructure />} />
+                    <Route path="/facilities" element={<Facilities />} />
                     <Route path="/faculty" element={<Faculty />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/privacy" element={<Privacy />} />
