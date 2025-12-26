@@ -1,0 +1,104 @@
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, ChevronRight } from 'lucide-react';
+
+const Academies = () => {
+    const academies = [
+        { id: '01', name: 'Arts and Humanities', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=800&auto=format&fit=crop', desc: "Fostering creativity and cultural understanding." },
+        { id: '02', name: 'Social Sciences', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop', desc: "Analyzing society and human relationships." },
+        { id: '03', name: 'Business and Management', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop', desc: "Developing strategic leadership skills." },
+        { id: '04', name: 'Science and Technology', image: 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=800&auto=format&fit=crop', desc: "Pioneering innovation and discovery." },
+        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092921461-eab62e97a783?q=80&w=800&auto=format&fit=crop', desc: "Building the infrastructure of tomorrow." },
+    ];
+
+    const [activeId, setActiveId] = useState('02');
+    const [isPaused, setIsPaused] = useState(false);
+
+    // Auto-rotation logic
+    useEffect(() => {
+        if (isPaused) return;
+
+        const interval = setInterval(() => {
+            setActiveId(prevId => {
+                const currentIndex = academies.findIndex(a => a.id === prevId);
+                const nextIndex = (currentIndex + 1) % academies.length;
+                return academies[nextIndex].id;
+            });
+        }, 4000); // Change every 4 seconds
+
+        return () => clearInterval(interval);
+    }, [isPaused, academies]);
+
+    return (
+        <section className="py-24 bg-gray-50">
+            <div className="container mx-auto px-4 md:px-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+                    {/* Left: Content List */}
+                    <div
+                        onMouseEnter={() => setIsPaused(true)}
+                        onMouseLeave={() => setIsPaused(false)}
+                    >
+                        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Our Areas</span>
+                        <h2 className="text-4xl font-serif font-bold mb-12 text-gray-900">
+                            Academies <span className="text-primary underline decoration-2 underline-offset-4">expertise</span>
+                        </h2>
+
+                        <div className="space-y-4">
+                            {academies.map((academy) => (
+                                <div
+                                    key={academy.id}
+                                    className={`group flex items-center justify-between p-6 border-b transition-all duration-300 cursor-pointer ${activeId === academy.id ? 'bg-white shadow-lg border-l-4 border-l-primary rounded-sm' : 'border-gray-200 hover:bg-white hover:pl-8'}`}
+                                    onClick={() => setActiveId(academy.id)}
+                                >
+                                    <div className="flex flex-col">
+                                        <div className="flex items-baseline gap-6">
+                                            <span className={`text-xl font-serif font-bold transition-colors ${activeId === academy.id ? 'text-primary' : 'text-gray-400 group-hover:text-primary'}`}>{academy.id}.</span>
+                                            <h3 className={`text-xl font-bold font-serif ${activeId === academy.id ? 'text-gray-900' : 'text-gray-600 group-hover:text-gray-900'}`}>
+                                                {academy.name}
+                                            </h3>
+                                        </div>
+                                        {/* Brief Description on Active */}
+                                        <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeId === academy.id ? 'max-h-20 opacity-100 mt-2 ml-12' : 'max-h-0 opacity-0'}`}>
+                                            <p className="text-sm text-gray-500 font-medium">{academy.desc}</p>
+                                        </div>
+                                    </div>
+
+                                    <div className={`transition-transform duration-300 ${activeId === academy.id ? 'rotate-90 text-primary' : 'text-gray-300 group-hover:text-primary'}`}>
+                                        <ChevronRight size={20} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right: Images (Dynamic with Fade) */}
+                    <div className="relative h-[600px] hidden lg:block rounded-sm overflow-hidden shadow-2xl">
+                        {academies.map((academy) => (
+                            <div
+                                key={academy.id}
+                                className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${activeId === academy.id ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                            >
+                                <img
+                                    src={academy.image}
+                                    alt={academy.name}
+                                    className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-out" // Slow zoom effect while visible
+                                    onError={(e) => { e.target.src = 'https://placehold.co/800x600/6d0b1a/white?text=Academy+Context' }}
+                                />
+                                <div className="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
+
+                                {/* Floating Badge */}
+                                <div className="absolute bottom-8 right-8 bg-white/95 backdrop-blur-sm p-6 max-w-xs shadow-xl border-l-4 border-accent animate-fade-in-up">
+                                    <h4 className="text-lg font-serif font-bold text-gray-900 mb-1">{academy.name}</h4>
+                                    <p className="text-xs text-gray-500 uppercase tracking-widest font-bold text-primary">Department</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default Academies;
