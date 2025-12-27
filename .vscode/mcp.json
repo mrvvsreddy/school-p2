@@ -1,0 +1,13 @@
+{
+	"servers": {
+		"neon database mcp": {
+			"type": "stdio",
+			"command": "npx",
+			"args": [
+				"neonctl@latest",
+				"init"
+			]
+		}
+	},
+	"inputs": []
+}

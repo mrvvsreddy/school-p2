@@ -7,14 +7,54 @@ const AdminLogin = () => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({ username: '', password: '' });
 
-    const handleSubmit = (e) => {
+    const [error, setError] = useState('');
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        // Simulate API call
-        setTimeout(() => {
-            setLoading(false);
+        setError('');
+
+        try {
+            // Backend expects form-data for OAuth2PasswordRequestForm
+            const formDataPayload = new FormData();
+            formDataPayload.append('username', formData.username);
+            formDataPayload.append('password', formData.password);
+
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${apiUrl}/api/v1/login/access-token`, {
+                method: 'POST',
+                body: formDataPayload,
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.detail || 'Login failed. Please check your credentials.');
+            }
+
+            const data = await response.json();
+
+            // Store session in Cookie (4 hours)
+            const maxAge = 4 * 60 * 60; // 4 hours in seconds
+            document.cookie = `adminToken=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Strict`;
+
+            if (data.role) {
+                // Determine if secure required (optional, usually good practice)
+                document.cookie = `adminRole=${data.role}; path=/; max-age=${maxAge}; SameSite=Strict`;
+            }
+            if (data.full_name) {
+                document.cookie = `adminName=${encodeURIComponent(data.full_name)}; path=/; max-age=${maxAge}; SameSite=Strict`;
+            }
+            if (data.profile_image) {
+                document.cookie = `adminImage=${encodeURIComponent(data.profile_image)}; path=/; max-age=${maxAge}; SameSite=Strict`;
+            }
+
             navigate('/admin/dashboard');
-        }, 800);
+        } catch (err) {
+            console.error('Login Error:', err);
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -33,6 +73,13 @@ const AdminLogin = () => {
                     <h1 className="text-2xl font-bold text-gray-900 mb-2">Admin Portal</h1>
                     <p className="text-gray-500 text-sm">Sign in to manage the school dashboard</p>
                 </div>
+
+                {error && (
+                    <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        {error}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-1.5">

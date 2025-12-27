@@ -117,3 +117,12 @@ dist
 # User specific files
 .DS_Store
 Thumbs.db
+
+# Backend
+server/venv
+server/.venv
+server/.env
+server/src/__pycache__
+__pycache__/
+*.py[cod]
+.mypy_cache/

@@ -28,6 +28,7 @@ import Exams from './admin/Exams'
 import AdmissionRequests from './admin/AdmissionRequests'
 import ContactRequests from './admin/ContactRequests'
 import Settings from './admin/Settings'
+import Admins from './admin/Admins'
 
 function App() {
     return (
@@ -52,7 +53,7 @@ function App() {
                     <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
 
                     {/* Admin Routes */}
-                    <Route path="/admin" element={<AdminLogin />} />
+                    <Route path="/admin/login" element={<AdminLogin />} />
                     <Route path="/admin" element={<AdminLayout />}>
                         <Route path="dashboard" element={<Dashboard />} />
                         <Route path="students" element={<Students />} />
@@ -63,6 +64,7 @@ function App() {
                         <Route path="admissions" element={<AdmissionRequests />} />
                         <Route path="contacts" element={<ContactRequests />} />
                         <Route path="settings" element={<Settings />} />
+                        <Route path="admins" element={<Admins />} />
                     </Route>
                 </Routes>
             </div>

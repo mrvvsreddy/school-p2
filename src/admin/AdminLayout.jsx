@@ -4,26 +4,43 @@ import {
     LayoutDashboard,
     Users,
     GraduationCap,
-    UserCircle,
     Settings,
     LogOut,
     Menu,
-    X,
-    Search,
-    Bell,
     Mail,
-    Globe,
     ChevronDown,
-    Bus,
     FileText,
-    AlertCircle,
-    CreditCard,
     MessageSquare
 } from 'lucide-react';
 
 const AdminLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const location = useLocation();
+    const navigate = useNavigate();
+
+    // Admin Profile State
+    const [adminProfile, setAdminProfile] = React.useState({ name: '', role: '', image: '' });
+
+    // Check Auth & Load Profile
+    React.useEffect(() => {
+        const getCookie = (name) => {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+            return '';
+        };
+
+        const token = getCookie('adminToken');
+        if (!token) {
+            navigate('/admin/login');
+        } else {
+            setAdminProfile({
+                name: getCookie('adminName') || 'Admin',
+                role: getCookie('adminRole') || 'Admin',
+                image: getCookie('adminImage') || ''
+            });
+        }
+    }, [navigate]);
 
     // Menu items based on the reference image
     const menuItems = [
@@ -35,6 +52,8 @@ const AdminLayout = () => {
         { path: '/admin/admissions', icon: Mail, label: 'Admissions' },
         { path: '/admin/contacts', icon: MessageSquare, label: 'Contact Requests' },
         { path: '/admin/settings', icon: Settings, label: 'Settings' },
+        // Admins menu - only visible to Principal
+        ...(adminProfile.role === 'PRINCIPAL' ? [{ path: '/admin/admins', icon: Users, label: 'Admins' }] : []),
     ];
 
     return (
@@ -116,14 +135,20 @@ const AdminLayout = () => {
                     <div className="flex items-center gap-6">
                         {/* Profile */}
                         <div className="flex items-center gap-3 pl-6 border-l border-transparent">
-                            <img
-                                src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=100&auto=format&fit=crop"
-                                alt="Profile"
-                                className="w-8 h-8 rounded-full object-cover shadow-sm"
-                            />
+                            {adminProfile.image ? (
+                                <img
+                                    src={adminProfile.image}
+                                    alt="Profile"
+                                    className="w-8 h-8 rounded-full object-cover shadow-sm"
+                                />
+                            ) : (
+                                <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                    {adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}
+                                </div>
+                            )}
                             <div className="hidden md:block text-left">
-                                <p className="text-sm font-bold text-slate-800 leading-tight">Steven Jhon</p>
-                                <p className="text-[10px] text-slate-500">Admin</p>
+                                <p className="text-sm font-bold text-slate-800 leading-tight">{adminProfile.name}</p>
+                                <p className="text-[10px] text-slate-500">{adminProfile.role}</p>
                             </div>
                             <ChevronDown size={14} className="text-slate-400" />
                         </div>
