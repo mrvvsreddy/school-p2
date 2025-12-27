@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Search,
     Filter,
@@ -8,7 +9,12 @@ import {
     Mail,
     Eye,
     Edit,
-    Trash2
+    Trash2,
+    Users,
+    User,
+    UserCheck,
+    XCircle,
+    Briefcase
 } from 'lucide-react';
 import TeacherProfileModal from './TeacherProfileModal';
 
@@ -34,6 +40,7 @@ const Teachers = () => {
             assignedClass: "Class 10-A",
             img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop"
         },
+
         {
             id: "#EMP-1002",
             employeeId: "EMP-1002",
@@ -128,66 +135,87 @@ const Teachers = () => {
     return (
         <div className="space-y-6">
 
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-slate-800">All Teachers</h1>
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-white rounded-full text-slate-600 text-sm font-semibold shadow-sm hover:bg-slate-50 transition-colors cursor-pointer">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                        <Briefcase size={24} />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-slate-800">42</p>
+                        <p className="text-sm text-slate-500">Total Teachers</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+                        <User size={24} />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-slate-800">18</p>
+                        <p className="text-sm text-slate-500">Male</p>
+                    </div>
+                </div>
+                <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                        <UserCheck size={24} />
+                    </div>
+                    <div>
+                        <p className="text-2xl font-bold text-slate-800">24</p>
+                        <p className="text-sm text-slate-500">Female</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Filters & Search */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="flex items-center gap-2 bg-white p-2.5 rounded-xl border border-gray-100 shadow-sm w-full sm:w-80">
+                    <Search className="text-slate-400 ml-2" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Search teachers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="bg-transparent border-none focus:ring-0 text-sm w-full text-slate-600 placeholder:text-slate-400"
+                    />
+                </div>
+                <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                    <select
+                        value={selectedSubject}
+                        onChange={(e) => setSelectedSubject(e.target.value)}
+                        className="bg-white border text-slate-600 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-[#C5A572] focus:border-[#C5A572] cursor-pointer shadow-sm hover:bg-gray-50 transition-colors"
+                    >
+                        <option value="All">All Subjects</option>
+                        <option value="Mathematics">Mathematics</option>
+                        <option value="Science">Science</option>
+                        <option value="English">English</option>
+                        <option value="History">History</option>
+                    </select>
+                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-gray-50 shadow-sm transition-colors whitespace-nowrap">
                         <Download size={18} />
                         Export
                     </button>
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-[#2C3E50] rounded-full text-white text-sm font-semibold shadow-lg hover:bg-[#1a252f] transition-colors cursor-pointer"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-[#C5A572] text-white rounded-xl text-sm font-bold hover:bg-[#b09060] transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
                     >
-                        <Plus size={18} />
-                        Add New Teacher
+                        <Plus size={20} />
+                        Add Teacher
                     </button>
                 </div>
             </div>
 
-            {/* Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-3 rounded-2xl shadow-sm">
-                <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                    <input
-                        type="text"
-                        placeholder="Search teacher..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-[#F0F1F5] rounded-full text-xs font-medium text-slate-600 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-                    />
-                </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <div className="relative flex-1 sm:flex-none">
-                        <select
-                            value={selectedSubject}
-                            onChange={(e) => setSelectedSubject(e.target.value)}
-                            className="appearance-none w-full sm:w-32 pl-4 pr-8 py-2 bg-[#F0F1F5] rounded-full text-xs font-semibold text-slate-600 focus:outline-none cursor-pointer"
-                        >
-                            <option value="All">All Subjects</option>
-                            <option value="Mathematics">Mathematics</option>
-                            <option value="Science">Science</option>
-                            <option value="English">English</option>
-                            <option value="History">History</option>
-                        </select>
-                        <Filter className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={14} />
-                    </div>
-                </div>
-            </div>
-
             {/* Table */}
-            <div className="bg-white rounded-3xl shadow-sm overflow-hidden">
+            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-gray-100">
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Name</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">ID</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Subject</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Department</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Assigned Class</th>
-                                <th className="py-3 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">Contact</th>
+                        <thead className="bg-slate-50/80">
+                            <tr>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject</th>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Department</th>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Assigned Class</th>
+                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
@@ -195,37 +223,37 @@ const Teachers = () => {
                                 <tr
                                     key={teacher.id}
                                     onClick={() => setSelectedTeacher(teacher)}
-                                    className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                                    className="hover:bg-slate-50/60 transition-colors group cursor-pointer"
                                 >
-                                    <td className="py-3 px-4">
-                                        <div className="flex items-center gap-3">
-                                            <img src={teacher.img} alt={teacher.name} className="w-8 h-8 rounded-full object-cover" />
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center gap-4">
+                                            <img src={teacher.img} alt={teacher.name} className="w-10 h-10 rounded-full object-cover shadow-sm" />
                                             <div>
-                                                <h3 className="text-xs font-bold text-slate-800">{teacher.name}</h3>
-                                                <div className="sm:hidden text-[10px] text-slate-400">{teacher.employeeId}</div>
+                                                <h3 className="text-sm font-bold text-slate-800">{teacher.name}</h3>
+                                                <div className="sm:hidden text-xs text-slate-400">{teacher.employeeId}</div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="py-3 px-4 text-xs font-semibold text-orange-400">
+                                    <td className="px-6 py-4 text-sm font-semibold text-orange-400">
                                         {teacher.employeeId}
                                     </td>
-                                    <td className="py-3 px-4">
-                                        <span className="text-[10px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">{teacher.subject}</span>
+                                    <td className="px-6 py-4">
+                                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{teacher.subject}</span>
                                     </td>
-                                    <td className="py-3 px-4 text-xs text-slate-600">
+                                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">
                                         {teacher.department}
                                     </td>
-                                    <td className="py-3 px-4">
-                                        <span className="text-[10px] font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{teacher.assignedClass}</span>
+                                    <td className="px-6 py-4">
+                                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{teacher.assignedClass}</span>
                                     </td>
-                                    <td className="py-3 px-4">
-                                        <div className="flex gap-2">
-                                            <button className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-500 transition-colors">
-                                                <Phone size={12} />
-                                            </button>
-                                            <button className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-orange-50 hover:text-orange-500 transition-colors">
-                                                <Mail size={12} />
-                                            </button>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-sm text-slate-700 font-medium flex items-center gap-2">
+                                                <Phone size={14} className="text-slate-400" /> {teacher.phone}
+                                            </span>
+                                            <span className="text-xs text-slate-400 flex items-center gap-2">
+                                                <Mail size={14} className="text-slate-400" /> {teacher.email}
+                                            </span>
                                         </div>
                                     </td>
                                 </tr>
@@ -246,48 +274,57 @@ const Teachers = () => {
                 </div>
 
                 {/* Add Teacher Modal */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm overflow-y-auto py-10">
-                        <div className="bg-white rounded-3xl p-8 w-full max-w-4xl shadow-2xl transform transition-all scale-100 my-auto">
-                            <div className="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+                {isModalOpen && createPortal(
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+                        <div
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                            onClick={() => setIsModalOpen(false)}
+                        />
+                        <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
+                            {/* Modal Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-slate-800">Add New Teacher</h2>
-                                    <p className="text-slate-500 text-sm mt-1">Enter all the required details below to register a new teacher.</p>
+                                    <h2 className="text-xl font-bold text-slate-800">Add New Teacher</h2>
+                                    <p className="text-sm text-slate-500 mt-1">Enter teacher details to create a new profile.</p>
                                 </div>
-                                <button onClick={() => setIsModalOpen(false)} className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer">
-                                    <Trash2 size={16} className="rotate-45" />
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                                >
+                                    <XCircle size={20} />
                                 </button>
                             </div>
 
-                            <form className="space-y-8">
+                            {/* Scrollable Content */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                                 {/* Section 1: Personal Details */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="w-1 h-6 bg-orange-400 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                        <div className="w-1 h-4 bg-orange-400 rounded-full"></div>
                                         Personal Details
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">First Name *</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="John" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Name *</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="Doe" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address *</label>
                                             <input type="email" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="teacher@example.com" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone Number *</label>
                                             <input type="tel" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="+1 234 567 890" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Date of Birth *</label>
                                             <input type="date" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Gender *</label>
                                             <select className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all cursor-pointer">
                                                 <option value="">Select Gender</option>
@@ -301,24 +338,24 @@ const Teachers = () => {
 
                                 {/* Section 2: Academic & Professional */}
                                 <div>
-                                    <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                        <div className="w-1 h-6 bg-blue-500 rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider">
+                                        <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
                                         Academic & Professional
                                     </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <div className="space-y-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee ID *</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="#EMP-1234" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Qualification *</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. M.Sc Mathematics" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Experience</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. 5 Years" />
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</label>
                                             <select className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all cursor-pointer">
                                                 <option value="">Select Subject</option>
@@ -328,29 +365,35 @@ const Teachers = () => {
                                                 <option value="History">History</option>
                                             </select>
                                         </div>
-                                        <div className="space-y-1">
+                                        <div className="space-y-1.5">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Basic Salary</label>
                                             <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. ₹45,000" />
                                         </div>
-                                        <div className="space-y-1 md:col-span-2">
+                                        <div className="space-y-1.5 md:col-span-2">
                                             <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</label>
-                                            <textarea className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all resize-none" rows="1" placeholder="Enter full address..."></textarea>
+                                            <textarea className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all resize-none" rows="2" placeholder="Enter full address..."></textarea>
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
-                                {/* Form Actions */}
-                                <div className="pt-6 border-t border-gray-100 flex gap-4 justify-end">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-8 py-3 rounded-xl border border-slate-200 text-slate-500 font-semibold hover:bg-slate-50 hover:text-slate-700 transition-colors cursor-pointer">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="px-8 py-3 rounded-xl bg-[#2C3E50] text-white font-semibold hover:bg-[#1a252f] shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30 transition-all cursor-pointer">
-                                        Save Teacher
-                                    </button>
-                                </div>
-                            </form>
+                            {/* Modal Footer */}
+                            <div className="p-6 border-t border-gray-100 flex gap-3 justify-end bg-gray-50/50 rounded-b-2xl shrink-0">
+                                <button
+                                    onClick={() => setIsModalOpen(false)}
+                                    className="px-6 py-2.5 rounded-xl border border-gray-200 text-slate-600 font-semibold hover:bg-white hover:border-gray-300 transition-all text-sm"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="px-6 py-2.5 rounded-xl bg-[#2C3E50] text-white font-semibold hover:bg-[#1a252f] shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all text-sm"
+                                >
+                                    Save Teacher
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    </div>,
+                    document.body
                 )}
 
                 <TeacherProfileModal

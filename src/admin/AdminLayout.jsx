@@ -114,37 +114,8 @@ const AdminLayout = () => {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        {/* Search */}
-                        <div className="hidden md:flex relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                className="w-56 pl-9 pr-4 py-2 bg-white rounded-full text-sm font-medium text-slate-600 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                            />
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex items-center gap-3">
-                            <button className="flex items-center gap-2 text-slate-500 font-medium hover:text-slate-700 text-sm">
-                                <Globe size={16} />
-                                <span>EN</span>
-                                <ChevronDown size={14} />
-                            </button>
-
-                            <button className="relative p-1.5 bg-white rounded-full text-slate-400 hover:text-slate-600 shadow-sm">
-                                <Mail size={18} />
-                                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-400 border-2 border-white rounded-full"></span>
-                            </button>
-
-                            <button className="relative p-1.5 bg-white rounded-full text-slate-400 hover:text-slate-600 shadow-sm">
-                                <Bell size={18} />
-                                <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-blue-500 border-2 border-white rounded-full"></span>
-                            </button>
-                        </div>
-
                         {/* Profile */}
-                        <div className="flex items-center gap-3 pl-6 border-l border-slate-200">
+                        <div className="flex items-center gap-3 pl-6 border-l border-transparent">
                             <img
                                 src="https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=100&auto=format&fit=crop"
                                 alt="Profile"
