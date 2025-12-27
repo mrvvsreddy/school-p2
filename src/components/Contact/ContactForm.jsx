@@ -26,7 +26,7 @@ const ContactForm = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="relative">
                         <label
-                            className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'fname' || document.getElementById('fname')?.value ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
+                            className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'fname' || (typeof document !== 'undefined' && document.getElementById('fname')?.value) ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
                         >
                             First Name
                         </label>
@@ -40,7 +40,7 @@ const ContactForm = () => {
                     </div>
                     <div className="relative">
                         <label
-                            className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'lname' || document.getElementById('lname')?.value ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
+                            className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'lname' || (typeof document !== 'undefined' && document.getElementById('lname')?.value) ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
                         >
                             Last Name
                         </label>
@@ -56,7 +56,7 @@ const ContactForm = () => {
 
                 <div className="relative">
                     <label
-                        className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'email' || document.getElementById('email')?.value ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
+                        className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'email' || (typeof document !== 'undefined' && document.getElementById('email')?.value) ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
                     >
                         Email Address
                     </label>
@@ -87,7 +87,7 @@ const ContactForm = () => {
 
                 <div className="relative">
                     <label
-                        className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'msg' || document.getElementById('msg')?.value ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
+                        className={`absolute left-4 transition-all duration-300 pointer-events-none ${focused === 'msg' || (typeof document !== 'undefined' && document.getElementById('msg')?.value) ? '-top-2.5 text-xs bg-white px-2 text-primary' : 'top-3.5 text-gray-400'}`}
                     >
                         Message
                     </label>
