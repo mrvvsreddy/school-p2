@@ -15,26 +15,70 @@ import Privacy from './pages/Privacy'
 import Facilities from './pages/Facilities'
 import Apply from './pages/Apply'
 
+import { DataProvider } from './context/DataContext'
+import AdminLogin from './admin/Login'
+import AdminLayout from './admin/AdminLayout'
+import Dashboard from './admin/Dashboard'
+import Inquiries from './admin/Inquiries'
+import Students from './admin/Students'
+import Teachers from './admin/Teachers'
+import Classes from './admin/Classes'
+import Exams from './admin/Exams'
+
+import AdmissionRequests from './admin/AdmissionRequests'
+import ContactRequests from './admin/ContactRequests'
+import Settings from './admin/Settings'
+
 function App() {
     return (
-        <div className="min-h-screen flex flex-col font-sans text-gray-900">
-            <Header />
-            <main className="flex-grow pt-24">
+        <DataProvider>
+            <div className="min-h-screen flex flex-col font-sans text-gray-900">
+                {/* We conditionally render Header/Footer inside components or here if not admin */}
+                {/* For simplicity in this structure, we'll keep Header/Footer for main site only */}
                 <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/admissions" element={<Admissions />} />
-                    <Route path="/apply" element={<Apply />} />
-                    <Route path="/academics" element={<Academics />} />
-                    <Route path="/facilities" element={<Facilities />} />
-                    <Route path="/faculty" element={<Faculty />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/privacy" element={<Privacy />} />
+                    {/* Public Website Routes */}
+                    <Route path="/" element={
+                        <Layout>
+                            <Home />
+                        </Layout>
+                    } />
+                    <Route path="/about" element={<Layout><About /></Layout>} />
+                    <Route path="/admissions" element={<Layout><Admissions /></Layout>} />
+                    <Route path="/apply" element={<Layout><Apply /></Layout>} />
+                    <Route path="/academics" element={<Layout><Academics /></Layout>} />
+                    <Route path="/facilities" element={<Layout><Facilities /></Layout>} />
+                    <Route path="/faculty" element={<Layout><Faculty /></Layout>} />
+                    <Route path="/contact" element={<Layout><Contact /></Layout>} />
+                    <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+
+                    {/* Admin Routes */}
+                    <Route path="/admin" element={<AdminLogin />} />
+                    <Route path="/admin" element={<AdminLayout />}>
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="students" element={<Students />} />
+                        <Route path="teachers" element={<Teachers />} />
+                        <Route path="class" element={<Classes />} />
+                        <Route path="exam" element={<Exams />} />
+                        <Route path="inquiries" element={<Inquiries />} />
+                        <Route path="admissions" element={<AdmissionRequests />} />
+                        <Route path="contacts" element={<ContactRequests />} />
+                        <Route path="settings" element={<Settings />} />
+                    </Route>
                 </Routes>
-            </main>
-            <Footer />
-        </div>
+            </div>
+        </DataProvider>
     )
 }
+
+// Wrapper to show Header/Footer on public pages only
+const Layout = ({ children }) => (
+    <>
+        <Header />
+        <main className="flex-grow pt-24">
+            {children}
+        </main>
+        <Footer />
+    </>
+);
 
 export default App

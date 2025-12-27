@@ -18,7 +18,7 @@ const routesToPrerender = [
     '/about',
     '/admissions',
     '/academics',
-    '/infrastructure',
+    '/facilities',
     '/faculty',
     '/contact',
     '/privacy'

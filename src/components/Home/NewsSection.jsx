@@ -1,30 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
+import { useData } from '../../context/DataContext';
+
 const NewsSection = () => {
-    const news = [
-        {
-            date: "02",
-            month: "DEC",
-            image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b955?q=80&w=2670&auto=format&fit=crop",
-            title: "Payments for summer 2024 (Germany)",
-            desc: "Learn more about the tuition fees."
-        },
-        {
-            date: "02",
-            month: "DEC",
-            image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2670&auto=format&fit=crop",
-            title: "Bayernt innovative 2024 (Germany)",
-            desc: "Join us for the innovation summit."
-        },
-        {
-            date: "02",
-            month: "DEC",
-            image: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=2670&auto=format&fit=crop",
-            title: "Payments for summer 2024 (Germany)",
-            desc: "Last call for registration."
-        }
-    ];
+    const { news } = useData();
+
+    // Limit to 3 items for homepage
+    const displayNews = news.slice(0, 3);
 
     return (
         <section className="py-24 bg-white">
