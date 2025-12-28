@@ -1,8 +1,12 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
 
-const News = () => {
-    const newsItems = [
+const News = ({ data, loading }) => {
+    // Default values for fallback
+    const newsData = data || {};
+    const tagline = newsData.tagline || 'Our Blog';
+    const title = newsData.title || 'Announcements & news feeds';
+    const items = newsData.items || [
         {
             id: 1,
             date: '02',
@@ -32,14 +36,14 @@ const News = () => {
     return (
         <section className="py-20 bg-white">
             <div className="container mx-auto px-4 md:px-6 text-center text-primary-dark">
-                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Our Blog</span>
+                <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{tagline}</span>
                 <h2 className="text-4xl font-serif font-bold mb-16 text-gray-900">
-                    Announcements & <span className="underline decoration-primary decoration-4 underline-offset-4">news</span> feeds
+                    {title}
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {newsItems.map((item) => (
-                        <div key={item.id} className="group text-left cursor-pointer">
+                    {items.map((item, index) => (
+                        <div key={item.id || index} className="group text-left cursor-pointer">
                             <div className="relative overflow-hidden mb-6 rounded-sm">
                                 <img
                                     src={item.image}

@@ -10,7 +10,8 @@ import {
     Mail,
     ChevronDown,
     FileText,
-    MessageSquare
+    MessageSquare,
+    Globe
 } from 'lucide-react';
 import { clearAdminSession, getAdminToken } from './utils/adminApi';
 
@@ -129,6 +130,8 @@ const AdminLayout = () => {
                                 <Link
                                     key={item.path}
                                     to={item.path}
+                                    target={item.label === 'Site Editor' ? '_blank' : undefined}
+                                    rel={item.label === 'Site Editor' ? 'noopener noreferrer' : undefined}
                                     className={`
                                         flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group
                                         ${isActive
@@ -138,6 +141,7 @@ const AdminLayout = () => {
                                 >
                                     <Icon size={20} className={isActive ? 'text-orange-500' : 'group-hover:text-orange-400'} />
                                     <span className={`text-sm ${isActive ? 'text-slate-900' : ''}`}>{item.label}</span>
+                                    {item.label === 'Site Editor' && <span className="ml-auto text-xs bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">New Tab</span>}
                                 </Link>
                             );
                         })}
@@ -172,6 +176,15 @@ const AdminLayout = () => {
 
                     {/* User Profile */}
                     <div className="flex items-center gap-3">
+                        <Link
+                            to="/admin/editor"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors mr-2 shadow-sm"
+                        >
+                            <Globe size={18} />
+                            <span className="font-medium text-sm">Site Editor</span>
+                        </Link>
                         <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl cursor-pointer hover:shadow-sm transition-shadow">
                             <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm">
                                 {adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}

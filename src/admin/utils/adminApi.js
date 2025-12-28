@@ -84,4 +84,23 @@ export const adminFetch = async (endpoint, options = {}) => {
     return response;
 };
 
+// Public fetch wrapper (no auth required)
+export const publicFetch = async (endpoint, options = {}) => {
+    const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+    };
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers
+    });
+
+    return response;
+};
+
+// Export API_BASE for direct use if needed
+export { API_BASE };
+
 export default adminFetch;
+

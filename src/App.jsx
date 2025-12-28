@@ -29,6 +29,9 @@ import AdmissionRequests from './admin/AdmissionRequests'
 import ContactRequests from './admin/ContactRequests'
 import Settings from './admin/Settings'
 import Admins from './admin/Admins'
+import Editor from './admin/editor'
+import HomePageEditor from './admin/editor/pages/home'
+import AboutPageEditor from './admin/editor/pages/about'
 
 function App() {
     return (
@@ -63,9 +66,13 @@ function App() {
                         <Route path="inquiries" element={<Inquiries />} />
                         <Route path="admissions" element={<AdmissionRequests />} />
                         <Route path="contacts" element={<ContactRequests />} />
+                        <Route path="contacts" element={<ContactRequests />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="admins" element={<Admins />} />
                     </Route>
+                    <Route path="/admin/site-editor" element={<Editor />} />
+                    <Route path="/admin/editor/home" element={<HomePageEditor />} />
+                    <Route path="/admin/editor/about" element={<AboutPageEditor />} />
                 </Routes>
             </div>
         </DataProvider>

@@ -125,6 +125,10 @@ app.include_router(applications.router, prefix=f"{settings.API_V1_STR}/applicati
 from src.api.v1.endpoints import contacts
 app.include_router(contacts.router, prefix=f"{settings.API_V1_STR}/contacts", tags=["contacts"])
 
+# Site content routes (CMS)
+from src.api.v1.endpoints import site_content
+app.include_router(site_content.router, prefix=f"{settings.API_V1_STR}/site-content", tags=["site-content"])
+
 # Keep-Alive Background Task (Render)
 import asyncio
 import httpx

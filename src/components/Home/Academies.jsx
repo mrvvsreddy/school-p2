@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
-const Academies = () => {
-    const academies = [
-        { id: '01', name: 'Arts and Humanities', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=800&auto=format&fit=crop', desc: "Fostering creativity and cultural understanding." },
-        { id: '02', name: 'Social Sciences', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop', desc: "Analyzing society and human relationships." },
-        { id: '03', name: 'Business and Management', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop', desc: "Developing strategic leadership skills." },
-        { id: '04', name: 'Science and Technology', image: 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=800&auto=format&fit=crop', desc: "Pioneering innovation and discovery." },
-        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop', desc: "Building the infrastructure of tomorrow." },
+const Academies = ({ data, loading }) => {
+    // Default values for fallback
+    const academyData = data || {};
+    const tagline = academyData.tagline || 'Our Areas';
+    const title = academyData.title || 'Academies expertise';
+    const academies = academyData.academies || [
+        { id: '01', name: 'Arts and Humanities', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=800&auto=format&fit=crop', description: "Fostering creativity and cultural understanding." },
+        { id: '02', name: 'Social Sciences', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop', description: "Analyzing society and human relationships." },
+        { id: '03', name: 'Business and Management', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop', description: "Developing strategic leadership skills." },
+        { id: '04', name: 'Science and Technology', image: 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=800&auto=format&fit=crop', description: "Pioneering innovation and discovery." },
+        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop', description: "Building the infrastructure of tomorrow." },
     ];
 
-    const [activeId, setActiveId] = useState('02');
+    const [activeId, setActiveId] = useState(academies[1]?.id || '02');
     const [isPaused, setIsPaused] = useState(false);
 
     // Auto-rotation logic
@@ -23,7 +27,7 @@ const Academies = () => {
                 const nextIndex = (currentIndex + 1) % academies.length;
                 return academies[nextIndex].id;
             });
-        }, 4000); // Change every 4 seconds
+        }, 4000);
 
         return () => clearInterval(interval);
     }, [isPaused, academies]);
@@ -38,9 +42,9 @@ const Academies = () => {
                         onMouseEnter={() => setIsPaused(true)}
                         onMouseLeave={() => setIsPaused(false)}
                     >
-                        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">Our Areas</span>
+                        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{tagline}</span>
                         <h2 className="text-4xl font-serif font-bold mb-12 text-gray-900">
-                            Academies <span className="text-primary underline decoration-2 underline-offset-4">expertise</span>
+                            {title}
                         </h2>
 
                         <div className="space-y-4">
@@ -59,7 +63,7 @@ const Academies = () => {
                                         </div>
                                         {/* Brief Description on Active */}
                                         <div className={`overflow-hidden transition-all duration-500 ease-in-out ${activeId === academy.id ? 'max-h-20 opacity-100 mt-2 ml-12' : 'max-h-0 opacity-0'}`}>
-                                            <p className="text-sm text-gray-500 font-medium">{academy.desc}</p>
+                                            <p className="text-sm text-gray-500 font-medium">{academy.description}</p>
                                         </div>
                                     </div>
 
@@ -81,7 +85,7 @@ const Academies = () => {
                                 <img
                                     src={academy.image}
                                     alt={academy.name}
-                                    className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-out" // Slow zoom effect while visible
+                                    className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-out"
                                     onError={(e) => { e.target.src = 'https://placehold.co/800x600/6d0b1a/white?text=Academy+Context' }}
                                 />
                                 <div className="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
