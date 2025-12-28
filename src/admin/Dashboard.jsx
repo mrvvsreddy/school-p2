@@ -1,20 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Users,
     GraduationCap,
-    UserCircle,
-    DollarSign,
     MoreHorizontal,
-    ArrowRight,
-    Search,
-    Facebook,
-    Twitter,
-    Instagram,
-    Youtube,
-    Eye,
-    ChevronLeft,
-    ChevronRight,
-    ArrowUpRight
+    ArrowUpRight,
+    Loader2
 } from 'lucide-react';
 import {
     BarChart,
@@ -28,9 +18,42 @@ import {
     Pie,
     Cell
 } from 'recharts';
+import adminFetch from './utils/adminApi';
 
 const AdminDashboard = () => {
-    // --- Mock Data for Charts ---
+    // Stats state
+    const [studentStats, setStudentStats] = useState({ total: 0, male: 0, female: 0 });
+    const [teacherStats, setTeacherStats] = useState({ total: 0 });
+    const [loading, setLoading] = useState(true);
+
+    // Fetch stats on mount
+    useEffect(() => {
+        fetchStats();
+    }, []);
+
+    const fetchStats = async () => {
+        try {
+            const [studentRes, teacherRes] = await Promise.all([
+                adminFetch('/students/stats/summary'),
+                adminFetch('/teachers/stats/summary')
+            ]);
+
+            if (studentRes.ok) {
+                const data = await studentRes.json();
+                setStudentStats(data);
+            }
+            if (teacherRes.ok) {
+                const data = await teacherRes.json();
+                setTeacherStats(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Mock Data for Charts (can be replaced with API later)
     const attendanceData = [
         { name: 'Jan', present: 95, absent: 5 },
         { name: 'Feb', present: 88, absent: 12 },
@@ -46,71 +69,47 @@ const AdminDashboard = () => {
         { name: 'Dec', present: 95, absent: 5 },
     ];
 
-    const studentData = [
-        { name: 'Male', value: 55, color: '#FFAB91' }, // Orange/Peach
-        { name: 'Female', value: 45, color: '#2C3E50' }, // Dark Blue
-    ];
+    // Compute pie chart data from live stats
+    const totalStudents = studentStats.male + studentStats.female;
+    const malePercent = totalStudents > 0 ? Math.round((studentStats.male / totalStudents) * 100) : 50;
+    const femalePercent = totalStudents > 0 ? 100 - malePercent : 50;
 
-    // --- Mock Data for Notices ---
-    const notices = [
-        {
-            id: 1,
-            title: "Inter-school competition",
-            subtitle: "(sports/singing/drawing/drama)",
-            date: "10 Feb, 2023",
-            views: "7k",
-            img: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: 2,
-            title: "Disciplinary action if school",
-            subtitle: "discipline is not followed",
-            date: "6 Feb, 2023",
-            views: "7k",
-            img: "https://images.unsplash.com/photo-1577896335477-0237136f3065?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: 3,
-            title: "School Annual function",
-            subtitle: "celebration 2023-24",
-            date: "2 Feb, 2023",
-            views: "7k",
-            img: "https://images.unsplash.com/photo-1549652127-2eec5c8e31ba?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: 4,
-            title: "Returning library books timely",
-            subtitle: "(Usually pinned on notice...)",
-            date: "31 Jan, 2023",
-            views: "7k",
-            img: "https://images.unsplash.com/photo-1524178232363-1fb2b075b955?q=80&w=100&auto=format&fit=crop"
-        }
+    const studentData = [
+        { name: 'Male', value: malePercent, color: '#FFAB91' },
+        { name: 'Female', value: femalePercent, color: '#2C3E50' },
     ];
 
     return (
         <div className="space-y-6">
 
             {/* Top Row Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                    { label: 'Students', value: '1260', icon: Users, bg: 'bg-white' },
-                    { label: 'Teachers', value: '224', icon: GraduationCap, bg: 'bg-white' },
-                    { label: 'Parents', value: '840', icon: UserCircle, bg: 'bg-white' },
-                ].map((stat, idx) => {
-                    const Icon = stat.icon;
-                    return (
-                        <div key={idx} className={`${stat.bg} p-4 rounded-2xl shadow-sm flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all`}>
-                            {/* Background texture optional */}
-                            <div className="z-10">
-                                <p className="text-slate-400 text-xs font-medium mb-1">{stat.label}</p>
-                                <h3 className="text-2xl font-bold text-slate-800">{stat.value}</h3>
-                            </div>
-                            <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-orange-400 group-hover:text-white transition-colors">
-                                <ArrowUpRight size={16} />
-                            </div>
-                        </div>
-                    )
-                })}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white p-4 rounded-2xl shadow-sm flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="z-10">
+                        <p className="text-slate-400 text-xs font-medium mb-1">Students</p>
+                        <h3 className="text-2xl font-bold text-slate-800">
+                            {loading ? (
+                                <span className="inline-block w-12 h-7 bg-slate-100 rounded animate-pulse"></span>
+                            ) : studentStats.total}
+                        </h3>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-orange-400 group-hover:text-white transition-colors">
+                        <ArrowUpRight size={16} />
+                    </div>
+                </div>
+                <div className="bg-white p-4 rounded-2xl shadow-sm flex items-start justify-between relative overflow-hidden group hover:shadow-md transition-all">
+                    <div className="z-10">
+                        <p className="text-slate-400 text-xs font-medium mb-1">Teachers</p>
+                        <h3 className="text-2xl font-bold text-slate-800">
+                            {loading ? (
+                                <span className="inline-block w-12 h-7 bg-slate-100 rounded animate-pulse"></span>
+                            ) : teacherStats.total}
+                        </h3>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-orange-400 group-hover:text-white transition-colors">
+                        <ArrowUpRight size={16} />
+                    </div>
+                </div>
             </div>
 
             {/* Middle Row: Charts */}
@@ -133,7 +132,7 @@ const AdminDashboard = () => {
                             </div>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500">
-                            <span>2023</span>
+                            <span>2024</span>
                             <MoreHorizontal size={16} />
                         </div>
                     </div>
@@ -200,19 +199,23 @@ const AdminDashboard = () => {
                     </div>
 
                     <div className="w-full flex justify-center gap-6 mt-2">
-                        {studentData.map((item) => (
-                            <div key={item.name} className="flex flex-col items-center">
-                                <div className="flex items-center gap-1.5 mb-1">
-                                    <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }}></span>
-                                    <span className="text-xs font-medium text-slate-500">{item.name}</span>
-                                </div>
-                                <span className="text-lg font-bold text-slate-800">{item.value}%</span>
+                        <div className="flex flex-col items-center">
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#FFAB91]"></span>
+                                <span className="text-xs font-medium text-slate-500">Boys</span>
                             </div>
-                        ))}
+                            <span className="text-lg font-bold text-slate-800">{studentStats.male}</span>
+                        </div>
+                        <div className="flex flex-col items-center">
+                            <div className="flex items-center gap-1.5 mb-1">
+                                <span className="w-2.5 h-2.5 rounded-full bg-[#2C3E50]"></span>
+                                <span className="text-xs font-medium text-slate-500">Girls</span>
+                            </div>
+                            <span className="text-lg font-bold text-slate-800">{studentStats.female}</span>
+                        </div>
                     </div>
                 </div>
             </div>
-
 
         </div>
     );

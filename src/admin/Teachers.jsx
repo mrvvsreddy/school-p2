@@ -1,136 +1,242 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Search,
-    Filter,
     Plus,
     Download,
     Phone,
     Mail,
-    Eye,
-    Edit,
-    Trash2,
     Users,
     User,
     UserCheck,
     XCircle,
-    Briefcase
+    Briefcase,
+    Loader2,
+    AlertTriangle,
+    FileSpreadsheet,
+    FileJson,
+    FileText,
+    ChevronDown
 } from 'lucide-react';
 import TeacherProfileModal from './TeacherProfileModal';
+import adminFetch from './utils/adminApi';
 
 const Teachers = () => {
-    // Mock Data
-    const teachers = [
-        {
-            id: "#EMP-1001",
-            employeeId: "EMP-1001",
-            name: "Rajesh Kumar",
-            subject: "History",
-            department: "Social Studies",
-            gender: "Male",
-            dob: "1985-04-12",
-            qualification: "M.A. History, B.Ed",
-            experience: "12 Years",
-            designation: "Senior Teacher",
-            joinDate: "2015-06-01",
-            phone: "+91 98765 11111",
-            email: "rajesh.k@example.com",
-            address: "15, Civil Lines, Delhi",
-            salary: "₹65,000",
-            assignedClass: "Class 10-A",
-            img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=100&auto=format&fit=crop"
-        },
-
-        {
-            id: "#EMP-1002",
-            employeeId: "EMP-1002",
-            name: "Priya Singh",
-            subject: "Mathematics",
-            department: "Science & Math",
-            gender: "Female",
-            dob: "1988-02-28",
-            qualification: "M.Sc Mathematics",
-            experience: "8 Years",
-            designation: "Teacher",
-            joinDate: "2018-03-15",
-            phone: "+91 98765 22222",
-            email: "priya.s@example.com",
-            address: "42, Koramangala, Bangalore",
-            salary: "₹55,000",
-            assignedClass: "Class 10-B",
-            img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: "#EMP-1003",
-            employeeId: "EMP-1003",
-            name: "Anjali Verma",
-            subject: "Biology",
-            department: "Science",
-            gender: "Female",
-            dob: "1990-11-05",
-            qualification: "M.Sc Biology, Ph.D",
-            experience: "5 Years",
-            designation: "Teacher",
-            joinDate: "2020-01-10",
-            phone: "+91 98765 33333",
-            email: "anjali.v@example.com",
-            address: "99, Adyar, Chennai",
-            salary: "₹60,000",
-            assignedClass: "Class 9-A",
-            img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: "#EMP-1004",
-            employeeId: "EMP-1004",
-            name: "Vikram Malhotra",
-            subject: "English",
-            department: "Languages",
-            gender: "Male",
-            dob: "1982-08-30",
-            qualification: "M.A. English Lit",
-            experience: "15 Years",
-            designation: "HOD",
-            joinDate: "2012-05-20",
-            phone: "+91 98765 44444",
-            email: "vikram.m@example.com",
-            address: "101, Bandra West, Mumbai",
-            salary: "₹85,000",
-            assignedClass: "Class 9-B",
-            img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=100&auto=format&fit=crop"
-        },
-        {
-            id: "#EMP-1005",
-            employeeId: "EMP-1005",
-            name: "Sneha Reddy",
-            subject: "Physics",
-            department: "Science",
-            gender: "Female",
-            dob: "1993-12-15",
-            qualification: "M.Sc Physics",
-            experience: "3 Years",
-            designation: "Junior Teacher",
-            joinDate: "2022-08-01",
-            phone: "+91 98765 55555",
-            email: "sneha.r@example.com",
-            address: "22, Jubilee Hills, Hyderabad",
-            salary: "₹40,000",
-            assignedClass: "Class 8-A",
-            img: "https://images.unsplash.com/photo-1554151228-14d9def656ec?q=80&w=100&auto=format&fit=crop"
-        },
-    ];
-
+    // State
+    const [teachers, setTeachers] = useState([]);
+    const [stats, setStats] = useState({ total: 0, male: 0, female: 0 });
+    const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedSubject, setSelectedSubject] = useState('All');
+    const [selectedDepartment, setSelectedDepartment] = useState('All');
     const [selectedTeacher, setSelectedTeacher] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [exportOpen, setExportOpen] = useState(false);
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, teacher: null, deleting: false });
+
+    // Form state
+    const [formData, setFormData] = useState({
+        name: '',
+        subject: '',
+        department: '',
+        gender: '',
+        dob: '',
+        qualification: '',
+        experience: '',
+        designation: '',
+        join_date: '',
+        salary: '',
+        phone: '',
+        email: '',
+        address: '',
+        profile_image: ''
+    });
+
+    // Fetch on mount
+    useEffect(() => {
+        fetchTeachers();
+        fetchStats();
+    }, []);
+
+    const fetchTeachers = async () => {
+        try {
+            setLoading(true);
+            const response = await adminFetch('/teachers/');
+            if (response.ok) {
+                const data = await response.json();
+                setTeachers(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch teachers:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchStats = async () => {
+        try {
+            const response = await adminFetch('/teachers/stats/summary');
+            if (response.ok) {
+                const data = await response.json();
+                setStats(data);
+            }
+        } catch (err) {
+            console.error('Failed to fetch stats:', err);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+
+        try {
+            const response = await adminFetch('/teachers/', {
+                method: 'POST',
+                body: JSON.stringify({
+                    ...formData,
+                    dob: formData.dob || null,
+                    join_date: formData.join_date || null
+                })
+            });
+
+            if (response.ok) {
+                await fetchTeachers();
+                await fetchStats();
+                closeModal();
+            } else {
+                const err = await response.json();
+                alert(err.detail || 'Failed to create teacher');
+            }
+        } catch (err) {
+            alert('Error creating teacher');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleDelete = async (teacherId) => {
+        const teacher = teachers.find(t => t.id === teacherId);
+        setDeleteConfirm({ open: true, teacher, deleting: false });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteConfirm.teacher) return;
+        setDeleteConfirm(prev => ({ ...prev, deleting: true }));
+
+        try {
+            const response = await adminFetch(`/teachers/${deleteConfirm.teacher.id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                await fetchTeachers();
+                await fetchStats();
+                setSelectedTeacher(null);
+                setDeleteConfirm({ open: false, teacher: null, deleting: false });
+            } else {
+                alert('Failed to delete teacher');
+                setDeleteConfirm(prev => ({ ...prev, deleting: false }));
+            }
+        } catch (err) {
+            alert('Failed to delete teacher');
+            setDeleteConfirm(prev => ({ ...prev, deleting: false }));
+        }
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+        setFormData({
+            name: '',
+            subject: '',
+            department: '',
+            gender: '',
+            dob: '',
+            qualification: '',
+            experience: '',
+            designation: '',
+            join_date: '',
+            salary: '',
+            phone: '',
+            email: '',
+            address: '',
+            profile_image: ''
+        });
+    };
 
     // Filter Logic
     const filteredTeachers = teachers.filter(teacher => {
         const matchesSearch = teacher.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            teacher.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesSubject = selectedSubject === 'All' || teacher.subject.includes(selectedSubject);
-        return matchesSearch && matchesSubject;
+            (teacher.employee_id || '').toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDept = selectedDepartment === 'All' || (teacher.department || '').includes(selectedDepartment);
+        return matchesSearch && matchesDept;
     });
+
+    // Get unique departments
+    const departments = [...new Set(teachers.map(t => t.department).filter(Boolean))];
+
+    // Filtered stats
+    const filteredStats = useMemo(() => {
+        if (selectedDepartment === 'All') return stats;
+        const total = filteredTeachers.length;
+        const male = filteredTeachers.filter(t => t.gender && t.gender.toLowerCase() === 'male').length;
+        const female = filteredTeachers.filter(t => t.gender && t.gender.toLowerCase() === 'female').length;
+        return { total, male, female };
+    }, [selectedDepartment, filteredTeachers, stats]);
+
+    // Export functions
+    const exportData = (format) => {
+        const dataToExport = filteredTeachers.map(t => ({
+            'Employee ID': t.employee_id,
+            'Name': t.name,
+            'Subject': t.subject || 'N/A',
+            'Department': t.department || 'N/A',
+            'Gender': t.gender || 'N/A',
+            'Designation': t.designation || 'N/A',
+            'Experience': t.experience || 'N/A',
+            'Qualification': t.qualification || 'N/A',
+            'Phone': t.phone || 'N/A',
+            'Email': t.email || 'N/A',
+            'Address': t.address || 'N/A',
+            'Assigned Classes': (t.assigned_class_names || []).join(', ') || 'N/A'
+        }));
+
+        const filename = selectedDepartment === 'All' ? 'all_teachers' : `${selectedDepartment.replace(/\s+/g, '_')}_teachers`;
+
+        if (format === 'json') {
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            downloadBlob(blob, `${filename}.json`);
+        } else if (format === 'csv') {
+            const headers = Object.keys(dataToExport[0] || {}).join(',');
+            const rows = dataToExport.map(row => Object.values(row).map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const csv = [headers, ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            downloadBlob(blob, `${filename}.csv`);
+        } else if (format === 'excel') {
+            const headers = Object.keys(dataToExport[0] || {});
+            let html = '<table border="1"><tr>';
+            headers.forEach(h => html += `<th>${h}</th>`);
+            html += '</tr>';
+            dataToExport.forEach(row => {
+                html += '<tr>';
+                Object.values(row).forEach(v => html += `<td>${v}</td>`);
+                html += '</tr>';
+            });
+            html += '</table>';
+            const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+            downloadBlob(blob, `${filename}.xls`);
+        }
+        setExportOpen(false);
+    };
+
+    const downloadBlob = (blob, filename) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     return (
         <div className="space-y-6">
@@ -142,8 +248,10 @@ const Teachers = () => {
                         <Briefcase size={24} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-800">42</p>
-                        <p className="text-sm text-slate-500">Total Teachers</p>
+                        <p className="text-2xl font-bold text-slate-800">{filteredStats.total}</p>
+                        <p className="text-sm text-slate-500">
+                            {selectedDepartment === 'All' ? 'Total Teachers' : `${selectedDepartment}`}
+                        </p>
                     </div>
                 </div>
                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
@@ -151,7 +259,7 @@ const Teachers = () => {
                         <User size={24} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-800">18</p>
+                        <p className="text-2xl font-bold text-slate-800">{filteredStats.male}</p>
                         <p className="text-sm text-slate-500">Male</p>
                     </div>
                 </div>
@@ -160,7 +268,7 @@ const Teachers = () => {
                         <UserCheck size={24} />
                     </div>
                     <div>
-                        <p className="text-2xl font-bold text-slate-800">24</p>
+                        <p className="text-2xl font-bold text-slate-800">{filteredStats.female}</p>
                         <p className="text-sm text-slate-500">Female</p>
                     </div>
                 </div>
@@ -175,28 +283,55 @@ const Teachers = () => {
                         placeholder="Search teachers..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-transparent border-none focus:ring-0 text-sm w-full text-slate-600 placeholder:text-slate-400"
+                        className="bg-transparent border-none focus:ring-0 text-sm w-full text-slate-600 placeholder:text-slate-400 outline-none"
                     />
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
+                <div className="flex items-center gap-3 w-full sm:w-auto">
                     <select
-                        value={selectedSubject}
-                        onChange={(e) => setSelectedSubject(e.target.value)}
-                        className="bg-white border text-slate-600 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-[#C5A572] focus:border-[#C5A572] cursor-pointer shadow-sm hover:bg-gray-50 transition-colors"
+                        value={selectedDepartment}
+                        onChange={(e) => setSelectedDepartment(e.target.value)}
+                        className="bg-white border text-slate-600 border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-[#C5A572] focus:border-[#C5A572] cursor-pointer shadow-sm"
                     >
-                        <option value="All">All Subjects</option>
-                        <option value="Mathematics">Mathematics</option>
-                        <option value="Science">Science</option>
-                        <option value="English">English</option>
-                        <option value="History">History</option>
+                        <option value="All">All Departments</option>
+                        {departments.map(dept => (
+                            <option key={dept} value={dept}>{dept}</option>
+                        ))}
                     </select>
-                    <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-gray-50 shadow-sm transition-colors whitespace-nowrap">
-                        <Download size={18} />
-                        Export
-                    </button>
+
+                    {/* Export Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setExportOpen(!exportOpen)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-gray-50 shadow-sm"
+                        >
+                            <Download size={18} />
+                            Export
+                            <ChevronDown size={16} className={`transition-transform ${exportOpen ? 'rotate-180' : ''}`} />
+                        </button>
+                        {exportOpen && (
+                            <>
+                                <div className="fixed inset-0 z-10" onClick={() => setExportOpen(false)} />
+                                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20">
+                                    <button onClick={() => exportData('csv')} className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                        <FileText size={18} className="text-green-500" /> Export as CSV
+                                    </button>
+                                    <button onClick={() => exportData('json')} className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                        <FileJson size={18} className="text-blue-500" /> Export as JSON
+                                    </button>
+                                    <button onClick={() => exportData('excel')} className="w-full px-4 py-2.5 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                        <FileSpreadsheet size={18} className="text-emerald-600" /> Export as Excel
+                                    </button>
+                                    <div className="border-t border-gray-100 mt-2 pt-2 px-4">
+                                        <p className="text-xs text-slate-400">{selectedDepartment === 'All' ? 'All teachers' : selectedDepartment} ({filteredTeachers.length})</p>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-[#C5A572] text-white rounded-xl text-sm font-bold hover:bg-[#b09060] transition-colors shadow-md hover:shadow-lg whitespace-nowrap"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-[#C5A572] text-white rounded-xl text-sm font-bold hover:bg-[#b09060] shadow-md"
                     >
                         <Plus size={20} />
                         Add Teacher
@@ -214,193 +349,199 @@ const Teachers = () => {
                                 <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
                                 <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Subject</th>
                                 <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Department</th>
-                                <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Assigned Class</th>
                                 <th className="px-6 py-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Contact</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-50">
-                            {filteredTeachers.map((teacher) => (
-                                <tr
-                                    key={teacher.id}
-                                    onClick={() => setSelectedTeacher(teacher)}
-                                    className="hover:bg-slate-50/60 transition-colors group cursor-pointer"
-                                >
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-4">
-                                            <img src={teacher.img} alt={teacher.name} className="w-10 h-10 rounded-full object-cover shadow-sm" />
-                                            <div>
-                                                <h3 className="text-sm font-bold text-slate-800">{teacher.name}</h3>
-                                                <div className="sm:hidden text-xs text-slate-400">{teacher.employeeId}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm font-semibold text-orange-400">
-                                        {teacher.employeeId}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">{teacher.subject}</span>
-                                    </td>
-                                    <td className="px-6 py-4 text-sm text-slate-600 font-medium">
-                                        {teacher.department}
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{teacher.assignedClass}</span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        <div className="flex flex-col gap-1">
-                                            <span className="text-sm text-slate-700 font-medium flex items-center gap-2">
-                                                <Phone size={14} className="text-slate-400" /> {teacher.phone}
-                                            </span>
-                                            <span className="text-xs text-slate-400 flex items-center gap-2">
-                                                <Mail size={14} className="text-slate-400" /> {teacher.email}
-                                            </span>
-                                        </div>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center">
+                                        <Loader2 className="animate-spin mx-auto text-slate-400" size={32} />
+                                        <p className="text-slate-400 mt-2">Loading teachers...</p>
                                     </td>
                                 </tr>
-                            ))}
+                            ) : filteredTeachers.length === 0 ? (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center text-slate-400">No teachers found</td>
+                                </tr>
+                            ) : (
+                                filteredTeachers.map((teacher) => (
+                                    <tr
+                                        key={teacher.id}
+                                        onClick={() => setSelectedTeacher(teacher)}
+                                        className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                    >
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                {teacher.profile_image ? (
+                                                    <img src={teacher.profile_image} alt={teacher.name} className="w-10 h-10 rounded-full object-cover shadow-sm" />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                                        {teacher.name.charAt(0)}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <h3 className="text-sm font-bold text-slate-800">{teacher.name}</h3>
+                                                    <p className="text-xs text-slate-400">{teacher.designation || 'Teacher'}</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm font-semibold text-orange-400">{teacher.employee_id}</td>
+                                        <td className="px-6 py-4">
+                                            <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-3 py-1 rounded-full">
+                                                {teacher.subject || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 text-sm text-slate-600 font-medium">{teacher.department || 'N/A'}</td>
+                                        <td className="px-6 py-4">
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-sm text-slate-700 font-medium flex items-center gap-2">
+                                                    <Phone size={14} className="text-slate-400" /> {teacher.phone || 'N/A'}
+                                                </span>
+                                                <span className="text-xs text-slate-400 flex items-center gap-2">
+                                                    <Mail size={14} className="text-slate-400" /> {teacher.email || 'N/A'}
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
-
-                {/* Pagination */}
-                <div className="p-6 border-t border-gray-50 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="text-xs text-slate-400">Showing 1-5 from {teachers.length} data</p>
-                    <div className="flex items-center gap-2">
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-400 text-xs hover:bg-[#2C3E50] hover:text-white hover:border-[#2C3E50] transition-colors">&lt;</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full bg-[#2C3E50] text-white text-xs font-bold shadow-md">1</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-500 text-xs hover:bg-slate-50 transition-colors">2</button>
-                        <button className="w-8 h-8 flex items-center justify-center rounded-full border border-slate-200 text-slate-400 text-xs hover:bg-[#2C3E50] hover:text-white hover:border-[#2C3E50] transition-colors">&gt;</button>
-                    </div>
+                <div className="p-6 border-t border-gray-50">
+                    <p className="text-xs text-slate-400">Showing {filteredTeachers.length} of {teachers.length} teachers</p>
                 </div>
+            </div>
 
-                {/* Add Teacher Modal */}
-                {isModalOpen && createPortal(
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-                        <div
-                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
-                            onClick={() => setIsModalOpen(false)}
-                        />
-                        <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200">
-                            {/* Modal Header */}
-                            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-800">Add New Teacher</h2>
-                                    <p className="text-sm text-slate-500 mt-1">Enter teacher details to create a new profile.</p>
-                                </div>
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="w-8 h-8 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                                >
-                                    <XCircle size={20} />
-                                </button>
+            {/* Add Teacher Modal */}
+            {isModalOpen && createPortal(
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh]">
+                        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
+                            <div>
+                                <h2 className="text-xl font-serif font-bold text-slate-800">Add New Teacher</h2>
+                                <p className="text-xs text-slate-500">Enter teacher details</p>
                             </div>
+                            <button onClick={closeModal} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full">
+                                <XCircle size={24} />
+                            </button>
+                        </div>
 
-                            {/* Scrollable Content */}
-                            <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
-                                {/* Section 1: Personal Details */}
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider">
-                                        <div className="w-1 h-4 bg-orange-400 rounded-full"></div>
-                                        Personal Details
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">First Name *</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="John" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Last Name *</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="Doe" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Email Address *</label>
-                                            <input type="email" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="teacher@example.com" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone Number *</label>
-                                            <input type="tel" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="+1 234 567 890" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Date of Birth *</label>
-                                            <input type="date" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Gender *</label>
-                                            <select className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all cursor-pointer">
-                                                <option value="">Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
-                                    </div>
+                        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Full Name *</label>
+                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="John Doe" />
                                 </div>
-
-                                {/* Section 2: Academic & Professional */}
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wider">
-                                        <div className="w-1 h-4 bg-blue-500 rounded-full"></div>
-                                        Academic & Professional
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Employee ID *</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="#EMP-1234" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Qualification *</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. M.Sc Mathematics" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Experience</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. 5 Years" />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Subject</label>
-                                            <select className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm text-slate-600 transition-all cursor-pointer">
-                                                <option value="">Select Subject</option>
-                                                <option value="Math">Mathematics</option>
-                                                <option value="Science">Science</option>
-                                                <option value="English">English</option>
-                                                <option value="History">History</option>
-                                            </select>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Basic Salary</label>
-                                            <input type="text" className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all" placeholder="e.g. ₹45,000" />
-                                        </div>
-                                        <div className="space-y-1.5 md:col-span-2">
-                                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Address</label>
-                                            <textarea className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 text-sm transition-all resize-none" rows="2" placeholder="Enter full address..."></textarea>
-                                        </div>
-                                    </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Subject</label>
+                                    <input type="text" value={formData.subject} onChange={(e) => setFormData({ ...formData, subject: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="Mathematics" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Department</label>
+                                    <input type="text" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="Science" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Gender</label>
+                                    <select value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm cursor-pointer">
+                                        <option value="">Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Date of Birth</label>
+                                    <input type="date" value={formData.dob} onChange={(e) => setFormData({ ...formData, dob: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Qualification</label>
+                                    <input type="text" value={formData.qualification} onChange={(e) => setFormData({ ...formData, qualification: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="M.Sc, B.Ed" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Experience</label>
+                                    <input type="text" value={formData.experience} onChange={(e) => setFormData({ ...formData, experience: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="5 Years" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Designation</label>
+                                    <input type="text" value={formData.designation} onChange={(e) => setFormData({ ...formData, designation: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="Senior Teacher" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Join Date</label>
+                                    <input type="date" value={formData.join_date} onChange={(e) => setFormData({ ...formData, join_date: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Salary</label>
+                                    <input type="text" value={formData.salary} onChange={(e) => setFormData({ ...formData, salary: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="₹50,000" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Phone</label>
+                                    <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="+91 98765 43210" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Email</label>
+                                    <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm" placeholder="teacher@school.com" />
+                                </div>
+                                <div className="space-y-1 md:col-span-3">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase">Address</label>
+                                    <textarea value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm resize-none" rows="2" placeholder="Full address..."></textarea>
                                 </div>
                             </div>
+                        </form>
 
-                            {/* Modal Footer */}
-                            <div className="p-6 border-t border-gray-100 flex gap-3 justify-end bg-gray-50/50 rounded-b-2xl shrink-0">
-                                <button
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-xl border border-gray-200 text-slate-600 font-semibold hover:bg-white hover:border-gray-300 transition-all text-sm"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="px-6 py-2.5 rounded-xl bg-[#2C3E50] text-white font-semibold hover:bg-[#1a252f] shadow-lg shadow-blue-900/10 hover:shadow-blue-900/20 transition-all text-sm"
-                                >
-                                    Save Teacher
-                                </button>
+                        <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3 rounded-b-2xl border-t border-gray-100 shrink-0">
+                            <button type="button" onClick={closeModal} className="px-6 py-2 rounded-lg text-sm font-bold text-slate-500 hover:bg-slate-200">Cancel</button>
+                            <button onClick={handleSubmit} disabled={saving} className="px-6 py-2 rounded-lg text-sm font-bold text-white bg-[#C5A572] hover:bg-[#b09060] disabled:opacity-50 flex items-center gap-2">
+                                {saving && <Loader2 size={16} className="animate-spin" />}
+                                Save Teacher
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* View Teacher Profile Modal */}
+            <TeacherProfileModal
+                teacher={selectedTeacher}
+                onClose={() => setSelectedTeacher(null)}
+                onDelete={handleDelete}
+                onUpdate={fetchTeachers}
+            />
+
+            {/* Delete Confirmation Dialog */}
+            {deleteConfirm.open && createPortal(
+                <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !deleteConfirm.deleting && setDeleteConfirm({ open: false, teacher: null, deleting: false })} />
+                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 flex items-center justify-center">
+                            <AlertTriangle size={32} className="text-red-500" />
+                        </div>
+                        <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Remove Teacher?</h2>
+                        <div className="bg-slate-50 rounded-xl p-4 mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                                    {deleteConfirm.teacher?.name?.charAt(0) || 'T'}
+                                </div>
+                                <div>
+                                    <p className="font-bold text-slate-800">{deleteConfirm.teacher?.name}</p>
+                                    <p className="text-sm text-slate-500">{deleteConfirm.teacher?.employee_id} • {deleteConfirm.teacher?.department || 'N/A'}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>,
-                    document.body
-                )}
-
-                <TeacherProfileModal
-                    teacher={selectedTeacher}
-                    onClose={() => setSelectedTeacher(null)}
-                />
-            </div>
+                        <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-6">
+                            <p className="text-sm text-red-700 font-medium text-center">⚠️ This action <strong>cannot be undone</strong>. All data will be permanently deleted.</p>
+                        </div>
+                        <div className="flex gap-3">
+                            <button onClick={() => setDeleteConfirm({ open: false, teacher: null, deleting: false })} disabled={deleteConfirm.deleting} className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-slate-600 font-semibold disabled:opacity-50">Cancel</button>
+                            <button onClick={confirmDelete} disabled={deleteConfirm.deleting} className="flex-1 px-4 py-3 rounded-xl bg-red-500 text-white font-semibold disabled:opacity-50 flex items-center justify-center gap-2">
+                                {deleteConfirm.deleting ? <><Loader2 size={16} className="animate-spin" />Removing...</> : 'Yes, Remove Teacher'}
+                            </button>
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>
     );
 };

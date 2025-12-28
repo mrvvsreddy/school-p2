@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, ArrowRight, ShieldCheck } from 'lucide-react';
+import { setAdminSession } from './utils/adminApi';
 
 const AdminLogin = () => {
     const navigate = useNavigate();
@@ -33,20 +34,8 @@ const AdminLogin = () => {
 
             const data = await response.json();
 
-            // Store session in Cookie (4 hours)
-            const maxAge = 4 * 60 * 60; // 4 hours in seconds
-            document.cookie = `adminToken=${data.access_token}; path=/; max-age=${maxAge}; SameSite=Strict`;
-
-            if (data.role) {
-                // Determine if secure required (optional, usually good practice)
-                document.cookie = `adminRole=${data.role}; path=/; max-age=${maxAge}; SameSite=Strict`;
-            }
-            if (data.full_name) {
-                document.cookie = `adminName=${encodeURIComponent(data.full_name)}; path=/; max-age=${maxAge}; SameSite=Strict`;
-            }
-            if (data.profile_image) {
-                document.cookie = `adminImage=${encodeURIComponent(data.profile_image)}; path=/; max-age=${maxAge}; SameSite=Strict`;
-            }
+            // Store session in cookies
+            setAdminSession(data);
 
             navigate('/admin/dashboard');
         } catch (err) {

@@ -101,6 +101,30 @@ app.include_router(auth.router, prefix=settings.API_V1_STR, tags=["auth"])
 from src.api.v1.endpoints import admins
 app.include_router(admins.router, prefix=f"{settings.API_V1_STR}/admins", tags=["admins"])
 
+# Students routes
+from src.api.v1.endpoints import students
+app.include_router(students.router, prefix=f"{settings.API_V1_STR}/students", tags=["students"])
+
+# Classes routes
+from src.api.v1.endpoints import classes
+app.include_router(classes.router, prefix=f"{settings.API_V1_STR}/classes", tags=["classes"])
+
+# Teachers routes
+from src.api.v1.endpoints import teachers
+app.include_router(teachers.router, prefix=f"{settings.API_V1_STR}/teachers", tags=["teachers"])
+
+# Exams routes
+from src.api.v1.endpoints import exams
+app.include_router(exams.router, prefix=f"{settings.API_V1_STR}/exams", tags=["exams"])
+
+# Applications routes
+from src.api.v1.endpoints import applications
+app.include_router(applications.router, prefix=f"{settings.API_V1_STR}/applications", tags=["applications"])
+
+# Contact requests routes
+from src.api.v1.endpoints import contacts
+app.include_router(contacts.router, prefix=f"{settings.API_V1_STR}/contacts", tags=["contacts"])
+
 # Keep-Alive Background Task (Render)
 import asyncio
 import httpx

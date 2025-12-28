@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     LayoutDashboard,
@@ -12,6 +12,7 @@ import {
     FileText,
     MessageSquare
 } from 'lucide-react';
+import { clearAdminSession, getAdminToken } from './utils/adminApi';
 
 const AdminLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -19,42 +20,82 @@ const AdminLayout = () => {
     const navigate = useNavigate();
 
     // Admin Profile State
-    const [adminProfile, setAdminProfile] = React.useState({ name: '', role: '', image: '' });
+    const [adminProfile, setAdminProfile] = useState({ name: '', role: '', image: '', permissions: [] });
 
-    // Check Auth & Load Profile
-    React.useEffect(() => {
-        const getCookie = (name) => {
-            const value = `; ${document.cookie}`;
-            const parts = value.split(`; ${name}=`);
-            if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-            return '';
-        };
+    const handleLogout = () => {
+        clearAdminSession();
+        navigate('/admin/login');
+    };
 
-        const token = getCookie('adminToken');
+    // Get cookie helper
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
+        return '';
+    };
+
+    // Fetch permissions from API
+    useEffect(() => {
+        const token = getAdminToken();
         if (!token) {
             navigate('/admin/login');
-        } else {
-            setAdminProfile({
-                name: getCookie('adminName') || 'Admin',
-                role: getCookie('adminRole') || 'Admin',
-                image: getCookie('adminImage') || ''
-            });
+            return;
         }
+
+        // Load basic profile from cookies
+        setAdminProfile({
+            name: getCookie('adminName') || 'Admin',
+            role: getCookie('adminRole') || 'Admin',
+            image: getCookie('adminImage') || '',
+            permissions: []
+        });
+
+        // Fetch full profile with permissions from API
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        fetch(`${API_URL}/api/v1/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(res => res.ok ? res.json() : Promise.reject())
+            .then(data => {
+                setAdminProfile(prev => ({
+                    ...prev,
+                    permissions: data.permissions || []
+                }));
+            })
+            .catch(() => {
+                // If API fails, continue with empty permissions (will show all for PRINCIPAL)
+            });
     }, [navigate]);
 
-    // Menu items based on the reference image
-    const menuItems = [
-        { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/admin/students', icon: Users, label: 'Students' },
-        { path: '/admin/teachers', icon: GraduationCap, label: 'Teachers' },
-        { path: '/admin/class', icon: Users, label: 'Class' },
-        { path: '/admin/exam', icon: FileText, label: 'Exam' },
-        { path: '/admin/admissions', icon: Mail, label: 'Admissions' },
-        { path: '/admin/contacts', icon: MessageSquare, label: 'Contact Requests' },
-        { path: '/admin/settings', icon: Settings, label: 'Settings' },
-        // Admins menu - only visible to Principal
-        ...(adminProfile.role === 'PRINCIPAL' ? [{ path: '/admin/admins', icon: Users, label: 'Admins' }] : []),
+    // Permission check helper
+    const hasPermission = (permission) => {
+        // PRINCIPAL has all permissions
+        if (adminProfile.role === 'PRINCIPAL') return true;
+        // Check specific permission
+        return adminProfile.permissions.includes(permission);
+    };
+
+    // Menu items with required permissions
+    const allMenuItems = [
+        { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard', permission: 'view_dashboard' },
+        { path: '/admin/students', icon: Users, label: 'Students', permission: 'view_students' },
+        { path: '/admin/teachers', icon: GraduationCap, label: 'Teachers', permission: 'view_teachers' },
+        { path: '/admin/class', icon: Users, label: 'Class', permission: 'view_classes' },
+        { path: '/admin/exam', icon: FileText, label: 'Exam', permission: 'view_exams' },
+        { path: '/admin/admissions', icon: Mail, label: 'Admissions', permission: 'view_applications' },
+        { path: '/admin/contacts', icon: MessageSquare, label: 'Contact Requests', permission: 'view_contacts' },
+        { path: '/admin/settings', icon: Settings, label: 'Settings', permission: 'manage_settings' },
+        { path: '/admin/admins', icon: Users, label: 'Admins', permission: 'manage_admins', principalOnly: true },
     ];
+
+    // Filter menu items based on permissions
+    const menuItems = allMenuItems.filter(item => {
+        // Principal-only items
+        if (item.principalOnly && adminProfile.role !== 'PRINCIPAL') return false;
+        // Check permission
+        return hasPermission(item.permission);
+    });
 
     return (
         <div className="min-h-screen bg-[#F0F1F5] flex font-sans text-slate-600">
@@ -73,35 +114,29 @@ const AdminLayout = () => {
                             <div className="w-8 h-8 rounded-lg bg-orange-400 rotate-45 flex items-center justify-center">
                                 <div className="w-4 h-4 bg-white rounded-md -rotate-45"></div>
                             </div>
-                            <h1 className="text-xl font-bold text-slate-800 tracking-tight">ACERO</h1>
+                            <span className="text-lg font-bold text-slate-800">ACERO</span>
                         </div>
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+                    <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
                         {menuItems.map((item) => {
                             const Icon = item.icon;
-                            // Naive active check - in real app might need exact match or startsWith
-                            const isActive = location.pathname.startsWith(item.path);
+                            const isActive = location.pathname === item.path ||
+                                (item.path !== '/admin/dashboard' && location.pathname.startsWith(item.path));
 
                             return (
                                 <Link
-                                    key={item.label}
+                                    key={item.path}
                                     to={item.path}
                                     className={`
-                                        flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative
+                                        flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-200 group
                                         ${isActive
-                                            ? 'text-slate-900 font-semibold'
-                                            : 'text-slate-400 hover:text-slate-600'
-                                        }
+                                            ? 'bg-orange-50 text-orange-500'
+                                            : 'text-slate-400 hover:bg-gray-50 hover:text-slate-600'}
                                     `}
                                 >
-                                    {/* Active Indicator Line */}
-                                    {isActive && (
-                                        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-orange-400 rounded-r-full" />
-                                    )}
-
-                                    <Icon size={18} className={isActive ? 'text-orange-400' : 'text-slate-400 group-hover:text-slate-500'} />
+                                    <Icon size={20} className={isActive ? 'text-orange-500' : 'group-hover:text-orange-400'} />
                                     <span className={`text-sm ${isActive ? 'text-slate-900' : ''}`}>{item.label}</span>
                                 </Link>
                             );
@@ -110,7 +145,10 @@ const AdminLayout = () => {
 
                     {/* Logout */}
                     <div className="p-4 mt-auto">
-                        <button className="flex items-center gap-4 px-4 py-3.5 text-slate-400 hover:text-red-500 transition-colors w-full">
+                        <button
+                            onClick={handleLogout}
+                            className="flex items-center gap-4 px-4 py-3.5 text-slate-400 hover:text-red-500 transition-colors w-full cursor-pointer"
+                        >
                             <LogOut size={20} />
                             <span className="font-medium">Log out</span>
                         </button>
@@ -129,44 +167,34 @@ const AdminLayout = () => {
                         >
                             <Menu size={20} />
                         </button>
-                        <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
+                        <h1 className="text-xl font-bold text-slate-700">Dashboard</h1>
                     </div>
 
-                    <div className="flex items-center gap-6">
-                        {/* Profile */}
-                        <div className="flex items-center gap-3 pl-6 border-l border-transparent">
-                            {adminProfile.image ? (
-                                <img
-                                    src={adminProfile.image}
-                                    alt="Profile"
-                                    className="w-8 h-8 rounded-full object-cover shadow-sm"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-orange-400 flex items-center justify-center text-white font-bold text-sm shadow-sm">
-                                    {adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}
-                                </div>
-                            )}
-                            <div className="hidden md:block text-left">
-                                <p className="text-sm font-bold text-slate-800 leading-tight">{adminProfile.name}</p>
-                                <p className="text-[10px] text-slate-500">{adminProfile.role}</p>
+                    {/* User Profile */}
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl cursor-pointer hover:shadow-sm transition-shadow">
+                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm">
+                                {adminProfile.name ? adminProfile.name.charAt(0).toUpperCase() : 'A'}
                             </div>
-                            <ChevronDown size={14} className="text-slate-400" />
+                            <div className="hidden sm:block">
+                                <p className="text-sm font-semibold text-slate-700">{adminProfile.name || 'Admin'}</p>
+                                <p className="text-xs text-slate-400">{adminProfile.role || 'Admin'}</p>
+                            </div>
+                            <ChevronDown size={16} className="text-slate-400" />
                         </div>
                     </div>
                 </header>
 
                 {/* Page Content */}
-                <main className="flex-1 overflow-auto px-6 pb-6">
-                    <div className="max-w-[1600px] mx-auto animate-fadeIn">
-                        <Outlet />
-                    </div>
+                <main className="flex-1 overflow-y-auto px-6 pb-6">
+                    <Outlet />
                 </main>
             </div>
 
-            {/* Overlay for mobile */}
+            {/* Mobile Overlay */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/20 z-40 lg:hidden backdrop-blur-sm"
+                    className="fixed inset-0 bg-black/20 z-40 lg:hidden"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}

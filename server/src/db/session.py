@@ -20,7 +20,11 @@ database_url = re.sub(r'[?&]channel_binding=[^&]+', '', database_url)
 engine = create_async_engine(
     database_url,
     echo=False, 
-    future=True
+    future=True,
+    pool_pre_ping=True,  # Check connection before using
+    pool_recycle=300,    # Recycle connections every 5 minutes
+    pool_size=5,
+    max_overflow=10
 )
 
 # Create Session Factory

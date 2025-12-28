@@ -14,8 +14,7 @@ import {
     Key,
     ChevronDown
 } from 'lucide-react';
-
-const API_BASE = 'http://localhost:8000/api/v1';
+import adminFetch from './utils/adminApi';
 
 const Admins = () => {
     const [admins, setAdmins] = useState([]);
@@ -43,7 +42,7 @@ const Admins = () => {
 
     const fetchAdmins = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admins/`);
+            const response = await adminFetch('/admins/');
             if (response.ok) {
                 const data = await response.json();
                 setAdmins(data);
@@ -57,7 +56,7 @@ const Admins = () => {
 
     const fetchPermissions = async () => {
         try {
-            const response = await fetch(`${API_BASE}/admins/permissions`);
+            const response = await adminFetch('/admins/permissions');
             if (response.ok) {
                 const data = await response.json();
                 setAvailablePermissions(data.permissions || []);
@@ -71,9 +70,9 @@ const Admins = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const url = editingAdmin
-                ? `${API_BASE}/admins/${editingAdmin.id}`
-                : `${API_BASE}/admins/`;
+            const endpoint = editingAdmin
+                ? `/admins/${editingAdmin.id}`
+                : `/admins/`;
             const method = editingAdmin ? 'PUT' : 'POST';
 
             const body = editingAdmin
@@ -86,9 +85,8 @@ const Admins = () => {
                     permissions: formData.permissions
                 };
 
-            const response = await fetch(url, {
+            const response = await adminFetch(endpoint, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body)
             });
 
@@ -108,7 +106,7 @@ const Admins = () => {
         if (!confirm(`Delete admin "${admin.username}"?`)) return;
 
         try {
-            const response = await fetch(`${API_BASE}/admins/${admin.id}`, {
+            const response = await adminFetch(`/admins/${admin.id}`, {
                 method: 'DELETE'
             });
             if (response.ok) {
@@ -416,8 +414,8 @@ const Admins = () => {
                                                 type="button"
                                                 onClick={() => handleTemplateChange(key)}
                                                 className={`p-3 rounded-xl border text-left transition-all ${formData.role_template === key
-                                                        ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100'
-                                                        : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                                                    ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-100'
+                                                    : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                                                     }`}
                                             >
                                                 <p className={`text-sm font-semibold ${formData.role_template === key ? 'text-blue-700' : 'text-slate-700'}`}>
@@ -449,8 +447,8 @@ const Admins = () => {
                                                     <label
                                                         key={perm}
                                                         className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all text-xs ${formData.permissions.includes(perm)
-                                                                ? 'bg-blue-50 border-blue-200'
-                                                                : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
+                                                            ? 'bg-blue-50 border-blue-200'
+                                                            : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                                                             }`}
                                                     >
                                                         <input
@@ -460,8 +458,8 @@ const Admins = () => {
                                                             className="sr-only"
                                                         />
                                                         <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${formData.permissions.includes(perm)
-                                                                ? 'bg-blue-500 border-blue-500'
-                                                                : 'border-slate-300'
+                                                            ? 'bg-blue-500 border-blue-500'
+                                                            : 'border-slate-300'
                                                             }`}>
                                                             {formData.permissions.includes(perm) && <Check size={10} className="text-white" />}
                                                         </div>
