@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Monitor, Split, Eye, Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { adminFetch } from '../../../utils/adminApi';
+import { Link, useNavigate } from 'react-router-dom';
+import adminFetch, { getAdminToken } from '../../../utils/adminApi';
 import AboutEditor from './AboutEditor';
 import AboutPreview from './AboutPreview';
 
 const AboutPageEditor = () => {
+    const navigate = useNavigate();
     const [content, setContent] = useState([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -14,8 +15,14 @@ const AboutPageEditor = () => {
     const [activeTab, setActiveTab] = useState('split'); // 'edit', 'split', 'preview'
 
     useEffect(() => {
+        // Check authentication
+        const token = getAdminToken();
+        if (!token) {
+            navigate('/admin/login');
+            return;
+        }
         fetchContent();
-    }, []);
+    }, [navigate]);
 
     const fetchContent = async () => {
         try {

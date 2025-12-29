@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-    Type, Image, AlignLeft, Clock, Users,
-    ChevronDown, ChevronUp, Loader2, Save, Plus, Trash2, Target, Eye
+    Type, Image as ImageIcon, AlignLeft, Clock, Users,
+    ChevronDown, ChevronUp, Loader2, Save, Plus, Trash2, Target, Eye, Camera
 } from 'lucide-react';
-import { adminFetch } from '../../../utils/adminApi';
+import adminFetch from '../../../utils/adminApi';
 
 // Collapsible Section Component
 const Section = ({ title, icon: Icon, isOpen, onToggle, badge, children, onSave, saving, sectionKey }) => (
@@ -49,57 +49,129 @@ const Section = ({ title, icon: Icon, isOpen, onToggle, badge, children, onSave,
 
 // Section icons and titles
 const sectionIcons = {
-    hero: Image,
+    hero: ImageIcon,
     mission_vision: Target,
     timeline: Clock,
-    leadership: Users
+    leadership: Users,
+    campus_gallery: Camera
 };
 
 const sectionTitles = {
     hero: 'Hero Banner',
     mission_vision: 'Mission & Vision',
     timeline: 'History Timeline',
-    leadership: 'Leadership Team'
+    leadership: 'Leadership Team',
+    campus_gallery: 'Life on Campus'
 };
 
 const sectionBadges = {
     hero: 'Banner',
     mission_vision: '2 Cards',
     timeline: 'Timeline',
-    leadership: 'Team'
+    leadership: 'Team',
+    campus_gallery: 'Gallery'
 };
+
+// Generate unique ID for new items
+const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const AboutEditor = ({ content, onUpdate }) => {
     const [localContent, setLocalContent] = useState({});
     const [openSection, setOpenSection] = useState('hero');
     const [savingSection, setSavingSection] = useState(null);
-    const isInitializedRef = useRef(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const updateTimeoutRef = useRef(null);
 
+    // Initialize from props when content changes
     useEffect(() => {
-        if (content && content.length > 0) {
-            const contentMap = {};
-            content.forEach(section => {
-                contentMap[section.section_key] = {
-                    id: section.id,
-                    content: section.content || {},
-                    order_index: section.order_index,
-                    is_active: section.is_active
+        if (!content || content.length === 0) return;
+
+        const contentMap = {};
+        content.forEach(section => {
+            // Parse JSON string if needed
+            let sectionContent = section.content;
+            if (typeof sectionContent === 'string') {
+                try {
+                    sectionContent = JSON.parse(sectionContent);
+                } catch (e) {
+                    console.error('Failed to parse content:', e);
+                    sectionContent = {};
+                }
+            }
+            sectionContent = sectionContent || {};
+
+            // Add IDs to timeline items (handle both 'items' and 'events' array names)
+            const timelineArray = sectionContent.items || sectionContent.events;
+            if (timelineArray && Array.isArray(timelineArray)) {
+                sectionContent = {
+                    ...sectionContent,
+                    items: timelineArray.map(item => ({
+                        ...item,
+                        _id: item._id || generateId()
+                    }))
                 };
-            });
-            setLocalContent(contentMap);
-            isInitializedRef.current = true;
-        }
+                // Remove 'events' if it exists (normalize to 'items')
+                delete sectionContent.events;
+            }
+
+            // Add IDs to leadership members
+            if (sectionContent.members && Array.isArray(sectionContent.members)) {
+                sectionContent = {
+                    ...sectionContent,
+                    members: sectionContent.members.map(member => ({
+                        ...member,
+                        _id: member._id || generateId()
+                    }))
+                };
+            }
+
+            // Add IDs to gallery images
+            if (sectionContent.images && Array.isArray(sectionContent.images)) {
+                sectionContent = {
+                    ...sectionContent,
+                    images: sectionContent.images.map(img => ({
+                        ...img,
+                        _id: img._id || generateId()
+                    }))
+                };
+            }
+
+            contentMap[section.section_key] = {
+                id: section.id,
+                content: sectionContent,
+                order_index: section.order_index,
+                is_active: section.is_active
+            };
+        });
+
+        setLocalContent(contentMap);
+        setIsInitialized(true);
     }, [content]);
 
+    // Debounced update to parent - only after initialization
     useEffect(() => {
-        if (isInitializedRef.current && onUpdate && Object.keys(localContent).length > 0) {
+        if (!isInitialized || !onUpdate || Object.keys(localContent).length === 0) return;
+
+        // Clear previous timeout
+        if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current);
+        }
+
+        // Debounce updates
+        updateTimeoutRef.current = setTimeout(() => {
             const updatedContent = content.map(section => ({
                 ...section,
                 content: localContent[section.section_key]?.content || section.content
             }));
             onUpdate(updatedContent);
-        }
-    }, [localContent]);
+        }, 300);
+
+        return () => {
+            if (updateTimeoutRef.current) {
+                clearTimeout(updateTimeoutRef.current);
+            }
+        };
+    }, [localContent, isInitialized]);
 
     const toggleSection = (key) => {
         setOpenSection(openSection === key ? null : key);
@@ -107,7 +179,7 @@ const AboutEditor = ({ content, onUpdate }) => {
 
     const getSectionData = (key) => localContent[key]?.content || {};
 
-    const updateSectionContent = (sectionKey, field, value) => {
+    const updateSectionContent = useCallback((sectionKey, field, value) => {
         setLocalContent(prev => ({
             ...prev,
             [sectionKey]: {
@@ -118,9 +190,9 @@ const AboutEditor = ({ content, onUpdate }) => {
                 }
             }
         }));
-    };
+    }, []);
 
-    const updateNestedContent = (sectionKey, path, value) => {
+    const updateNestedContent = useCallback((sectionKey, path, value) => {
         const keys = path.split('.');
         setLocalContent(prev => {
             const section = prev[sectionKey] || {};
@@ -136,7 +208,7 @@ const AboutEditor = ({ content, onUpdate }) => {
                 [sectionKey]: { ...section, content }
             };
         });
-    };
+    }, []);
 
     // Hero Editor
     const renderHeroEditor = () => {
@@ -242,7 +314,30 @@ const AboutEditor = ({ content, onUpdate }) => {
     // Timeline Editor
     const renderTimelineEditor = () => {
         const data = getSectionData('timeline');
-        const items = data.items || [];
+        // Handle both 'items' and 'events' array names (legacy vs new)
+        const items = data.items || data.events || [];
+
+        const updateItem = (id, field, value) => {
+            const newItems = items.map(item =>
+                item._id === id ? { ...item, [field]: value } : item
+            );
+            updateSectionContent('timeline', 'items', newItems);
+            // Also clear 'events' if it exists to migrate to 'items'
+            if (data.events) {
+                updateSectionContent('timeline', 'events', undefined);
+            }
+        };
+
+        const removeItem = (id) => {
+            const newItems = items.filter(item => item._id !== id);
+            updateSectionContent('timeline', 'items', newItems);
+        };
+
+        const addItem = () => {
+            const newItems = [...items, { _id: generateId(), year: '', title: '', description: '' }];
+            updateSectionContent('timeline', 'items', newItems);
+        };
+
         return (
             <>
                 <div>
@@ -268,14 +363,11 @@ const AboutEditor = ({ content, onUpdate }) => {
                 <div className="space-y-4">
                     <label className="block text-sm font-bold text-slate-700">Timeline Items ({items.length})</label>
                     {items.map((item, index) => (
-                        <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                        <div key={item._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-500 uppercase">Year {index + 1}</span>
                                 <button
-                                    onClick={() => {
-                                        const newItems = items.filter((_, i) => i !== index);
-                                        updateSectionContent('timeline', 'items', newItems);
-                                    }}
+                                    onClick={() => removeItem(item._id)}
                                     className="text-red-500 hover:text-red-700"
                                 >
                                     <Trash2 size={14} />
@@ -285,22 +377,14 @@ const AboutEditor = ({ content, onUpdate }) => {
                                 <input
                                     type="text"
                                     value={item.year || ''}
-                                    onChange={(e) => {
-                                        const newItems = [...items];
-                                        newItems[index] = { ...newItems[index], year: e.target.value };
-                                        updateSectionContent('timeline', 'items', newItems);
-                                    }}
+                                    onChange={(e) => updateItem(item._id, 'year', e.target.value)}
                                     className="px-3 py-2 border border-slate-200 rounded-lg text-sm font-bold"
                                     placeholder="Year"
                                 />
                                 <input
                                     type="text"
                                     value={item.title || ''}
-                                    onChange={(e) => {
-                                        const newItems = [...items];
-                                        newItems[index] = { ...newItems[index], title: e.target.value };
-                                        updateSectionContent('timeline', 'items', newItems);
-                                    }}
+                                    onChange={(e) => updateItem(item._id, 'title', e.target.value)}
                                     className="col-span-3 px-3 py-2 border border-slate-200 rounded-lg text-sm"
                                     placeholder="Title"
                                 />
@@ -308,21 +392,14 @@ const AboutEditor = ({ content, onUpdate }) => {
                             <textarea
                                 rows="2"
                                 value={item.description || ''}
-                                onChange={(e) => {
-                                    const newItems = [...items];
-                                    newItems[index] = { ...newItems[index], description: e.target.value };
-                                    updateSectionContent('timeline', 'items', newItems);
-                                }}
+                                onChange={(e) => updateItem(item._id, 'description', e.target.value)}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"
                                 placeholder="Description"
                             />
                         </div>
                     ))}
                     <button
-                        onClick={() => {
-                            const newItems = [...items, { year: '', title: '', description: '' }];
-                            updateSectionContent('timeline', 'items', newItems);
-                        }}
+                        onClick={addItem}
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium"
                     >
                         <Plus size={16} /> Add Timeline Item
@@ -336,6 +413,24 @@ const AboutEditor = ({ content, onUpdate }) => {
     const renderLeadershipEditor = () => {
         const data = getSectionData('leadership');
         const members = data.members || [];
+
+        const updateMember = (id, field, value) => {
+            const newMembers = members.map(member =>
+                member._id === id ? { ...member, [field]: value } : member
+            );
+            updateSectionContent('leadership', 'members', newMembers);
+        };
+
+        const removeMember = (id) => {
+            const newMembers = members.filter(member => member._id !== id);
+            updateSectionContent('leadership', 'members', newMembers);
+        };
+
+        const addMember = () => {
+            const newMembers = [...members, { _id: generateId(), name: '', role: '', image: '' }];
+            updateSectionContent('leadership', 'members', newMembers);
+        };
+
         return (
             <>
                 <div>
@@ -361,14 +456,11 @@ const AboutEditor = ({ content, onUpdate }) => {
                 <div className="space-y-4">
                     <label className="block text-sm font-bold text-slate-700">Team Members ({members.length})</label>
                     {members.map((member, index) => (
-                        <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                        <div key={member._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-slate-500 uppercase">Member {index + 1}</span>
                                 <button
-                                    onClick={() => {
-                                        const newMembers = members.filter((_, i) => i !== index);
-                                        updateSectionContent('leadership', 'members', newMembers);
-                                    }}
+                                    onClick={() => removeMember(member._id)}
                                     className="text-red-500 hover:text-red-700"
                                 >
                                     <Trash2 size={14} />
@@ -378,22 +470,14 @@ const AboutEditor = ({ content, onUpdate }) => {
                                 <input
                                     type="text"
                                     value={member.name || ''}
-                                    onChange={(e) => {
-                                        const newMembers = [...members];
-                                        newMembers[index] = { ...newMembers[index], name: e.target.value };
-                                        updateSectionContent('leadership', 'members', newMembers);
-                                    }}
+                                    onChange={(e) => updateMember(member._id, 'name', e.target.value)}
                                     className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
                                     placeholder="Name"
                                 />
                                 <input
                                     type="text"
                                     value={member.role || ''}
-                                    onChange={(e) => {
-                                        const newMembers = [...members];
-                                        newMembers[index] = { ...newMembers[index], role: e.target.value };
-                                        updateSectionContent('leadership', 'members', newMembers);
-                                    }}
+                                    onChange={(e) => updateMember(member._id, 'role', e.target.value)}
                                     className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
                                     placeholder="Role"
                                 />
@@ -401,11 +485,7 @@ const AboutEditor = ({ content, onUpdate }) => {
                             <input
                                 type="url"
                                 value={member.image || ''}
-                                onChange={(e) => {
-                                    const newMembers = [...members];
-                                    newMembers[index] = { ...newMembers[index], image: e.target.value };
-                                    updateSectionContent('leadership', 'members', newMembers);
-                                }}
+                                onChange={(e) => updateMember(member._id, 'image', e.target.value)}
                                 className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"
                                 placeholder="Image URL"
                             />
@@ -415,13 +495,89 @@ const AboutEditor = ({ content, onUpdate }) => {
                         </div>
                     ))}
                     <button
-                        onClick={() => {
-                            const newMembers = [...members, { name: '', role: '', image: '' }];
-                            updateSectionContent('leadership', 'members', newMembers);
-                        }}
+                        onClick={addMember}
                         className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium"
                     >
                         <Plus size={16} /> Add Team Member
+                    </button>
+                </div>
+            </>
+        );
+    };
+
+    // Campus Gallery Editor
+    const renderCampusGalleryEditor = () => {
+        const data = getSectionData('campus_gallery');
+        const images = data.images || [];
+
+        const updateImage = (id, field, value) => {
+            const newImages = images.map(img =>
+                img._id === id ? { ...img, [field]: value } : img
+            );
+            updateSectionContent('campus_gallery', 'images', newImages);
+        };
+
+        const removeImage = (id) => {
+            const newImages = images.filter(img => img._id !== id);
+            updateSectionContent('campus_gallery', 'images', newImages);
+        };
+
+        const addImage = () => {
+            const newImages = [...images, { _id: generateId(), label: '', url: '' }];
+            updateSectionContent('campus_gallery', 'images', newImages);
+        };
+
+        return (
+            <>
+                <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Section Title</label>
+                    <input
+                        type="text"
+                        value={data.title || ''}
+                        onChange={(e) => updateSectionContent('campus_gallery', 'title', e.target.value)}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm"
+                        placeholder="e.g., Life on Campus"
+                    />
+                </div>
+                <div className="space-y-4">
+                    <label className="block text-sm font-bold text-slate-700">Gallery Images ({images.length})</label>
+                    {images.map((img, index) => (
+                        <div key={img._id} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-slate-500 uppercase">Image {index + 1}</span>
+                                <button
+                                    onClick={() => removeImage(img._id)}
+                                    className="text-red-500 hover:text-red-700"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <input
+                                    type="text"
+                                    value={img.label || ''}
+                                    onChange={(e) => updateImage(img._id, 'label', e.target.value)}
+                                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                    placeholder="Label"
+                                />
+                                <input
+                                    type="url"
+                                    value={img.url || ''}
+                                    onChange={(e) => updateImage(img._id, 'url', e.target.value)}
+                                    className="px-3 py-2 border border-slate-200 rounded-lg text-sm"
+                                    placeholder="Image URL"
+                                />
+                            </div>
+                            {img.url && (
+                                <img src={img.url} alt={img.label} className="w-full h-20 rounded-lg object-cover" onError={(e) => { e.target.src = 'https://placehold.co/400x100/f1f5f9/94a3b8?text=Campus' }} />
+                            )}
+                        </div>
+                    ))}
+                    <button
+                        onClick={addImage}
+                        className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium"
+                    >
+                        <Plus size={16} /> Add Gallery Image
                     </button>
                 </div>
             </>
@@ -434,6 +590,7 @@ const AboutEditor = ({ content, onUpdate }) => {
             case 'mission_vision': return renderMissionVisionEditor();
             case 'timeline': return renderTimelineEditor();
             case 'leadership': return renderLeadershipEditor();
+            case 'campus_gallery': return renderCampusGalleryEditor();
             default: return <div className="p-4 text-slate-500 text-center">Editor not available.</div>;
         }
     };
@@ -444,10 +601,22 @@ const AboutEditor = ({ content, onUpdate }) => {
 
         setSavingSection(sectionKey);
         try {
+            // Clean up internal _id fields before saving
+            let contentToSave = { ...sectionData.content };
+            if (contentToSave.items) {
+                contentToSave.items = contentToSave.items.map(({ _id, ...rest }) => rest);
+            }
+            if (contentToSave.members) {
+                contentToSave.members = contentToSave.members.map(({ _id, ...rest }) => rest);
+            }
+            if (contentToSave.images) {
+                contentToSave.images = contentToSave.images.map(({ _id, ...rest }) => rest);
+            }
+
             const response = await adminFetch(`/site-content/sections/${sectionData.id}`, {
                 method: 'PUT',
                 body: JSON.stringify({
-                    content: sectionData.content,
+                    content: contentToSave,
                     order_index: sectionData.order_index,
                     is_active: sectionData.is_active
                 })
@@ -457,7 +626,7 @@ const AboutEditor = ({ content, onUpdate }) => {
 
             if (onUpdate) {
                 const updatedContent = content.map(s =>
-                    s.section_key === sectionKey ? { ...s, content: sectionData.content } : s
+                    s.section_key === sectionKey ? { ...s, content: contentToSave } : s
                 );
                 onUpdate(updatedContent);
             }
@@ -469,7 +638,7 @@ const AboutEditor = ({ content, onUpdate }) => {
         }
     };
 
-    const sectionOrder = ['hero', 'mission_vision', 'timeline', 'leadership'];
+    const sectionOrder = ['hero', 'mission_vision', 'timeline', 'leadership', 'campus_gallery'];
     const availableSections = sectionOrder.filter(key => localContent[key]);
 
     if (!content || content.length === 0) {

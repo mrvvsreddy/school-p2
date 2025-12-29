@@ -98,7 +98,7 @@ const HomePageEditor = () => {
             {/* Header */}
             <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-10 shrink-0">
                 <div className="flex items-center gap-4">
-                    <Link to="/admin/editor" className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
+                    <Link to="/admin/site-editor" className="p-2 hover:bg-slate-100 rounded-lg text-slate-500 transition-colors">
                         <ArrowLeft size={20} />
                     </Link>
                     <div>

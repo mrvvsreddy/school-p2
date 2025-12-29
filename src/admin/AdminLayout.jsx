@@ -80,6 +80,7 @@ const AdminLayout = () => {
     // Menu items with required permissions
     const allMenuItems = [
         { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Dashboard', permission: 'view_dashboard' },
+        { path: '/admin/site-editor', icon: Globe, label: 'Site Editor', permission: 'manage_settings' },
         { path: '/admin/students', icon: Users, label: 'Students', permission: 'view_students' },
         { path: '/admin/teachers', icon: GraduationCap, label: 'Teachers', permission: 'view_teachers' },
         { path: '/admin/class', icon: Users, label: 'Class', permission: 'view_classes' },

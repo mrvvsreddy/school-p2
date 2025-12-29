@@ -71,6 +71,7 @@ function App() {
                         <Route path="admins" element={<Admins />} />
                     </Route>
                     <Route path="/admin/site-editor" element={<Editor />} />
+                    <Route path="/admin/editor" element={<Editor />} />
                     <Route path="/admin/editor/home" element={<HomePageEditor />} />
                     <Route path="/admin/editor/about" element={<AboutPageEditor />} />
                 </Routes>

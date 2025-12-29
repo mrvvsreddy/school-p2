@@ -1,11 +1,12 @@
 """
 Script to seed About page content to the database.
 Run this script from the server directory:
-    python -m scripts.seed_about_content
+    uv run python -m scripts.seed_about_content
 """
 
 import asyncio
 import json
+import sys
 from sqlalchemy import select
 from src.db.session import AsyncSessionLocal
 from src.db.models.site_page_content import SitePageContent
@@ -74,6 +75,21 @@ async def seed_about_content():
                     {"name": "Robert Wilson", "role": "Sports Director", "image": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop"}
                 ]
             }
+        },
+        {
+            "page_slug": "about",
+            "section_key": "campus_gallery",
+            "order_index": 4,
+            "is_active": True,
+            "content": {
+                "title": "Life on Campus",
+                "images": [
+                    {"label": "Main Quadrangle", "url": "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=1200&auto=format&fit=crop"},
+                    {"label": "Science Labs", "url": "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=800&auto=format&fit=crop"},
+                    {"label": "Sports Complex", "url": "https://images.unsplash.com/photo-1596495577886-d920f1fb7238?q=80&w=800&auto=format&fit=crop"},
+                    {"label": "Modern Library", "url": "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?q=80&w=1200&auto=format&fit=crop"}
+                ]
+            }
         }
     ]
 
@@ -107,5 +123,14 @@ async def seed_about_content():
         print("About page content seeded successfully!")
 
 
-if __name__ == "__main__":
+def main():
+    """Run with proper Windows event loop handling."""
+    if sys.platform == 'win32':
+        # Use WindowsSelectorEventLoopPolicy to avoid SSL cleanup issues
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    
     asyncio.run(seed_about_content())
+
+
+if __name__ == "__main__":
+    main()
