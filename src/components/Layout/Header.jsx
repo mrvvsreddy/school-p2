@@ -1,24 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Search } from 'lucide-react';
+import { Menu, X, Loader2 } from 'lucide-react';
 
 const Header = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [content, setContent] = useState(null);
+    const [loading, setLoading] = useState(true);
     const location = useLocation();
 
-    React.useEffect(() => {
+    useEffect(() => {
         setIsMounted(true);
+        fetchHeaderContent();
     }, []);
 
-    const navLinks = [
-        { name: 'Home', path: '/' },
-        { name: 'About Us', path: '/about' },
-        { name: 'Admissions', path: '/admissions' },
-        { name: 'Academics', path: '/academics' },
-        { name: 'Facilities', path: '/facilities' },
-        { name: 'Contact', path: '/contact' },
-    ];
+    const fetchHeaderContent = async () => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/site-content/public/header`);
+            if (response.ok) {
+                const data = await response.json();
+                const parsed = {};
+                data.forEach(section => {
+                    let sectionContent = section.content;
+                    if (typeof sectionContent === 'string') {
+                        try { sectionContent = JSON.parse(sectionContent); } catch { sectionContent = {}; }
+                    }
+                    parsed[section.section_key] = sectionContent || {};
+                });
+                setContent(parsed);
+            }
+        } catch (err) {
+            console.error('Failed to fetch header content:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Don't render until data is loaded
+    if (loading || !content) {
+        return (
+            <header className="bg-white shadow-sm fixed top-0 left-0 w-full z-50 h-20 flex items-center justify-center">
+                <Loader2 className="animate-spin text-primary" size={24} />
+            </header>
+        );
+    }
+
+    const brand = content.brand || {};
+    const navigation = content.navigation || {};
+    const navLinks = navigation.links || [];
 
     return (
         <header className={`bg-white shadow-sm fixed top-0 left-0 w-full z-50 h-20 transition-transform duration-700 ease-out transform ${isMounted ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
@@ -26,18 +55,17 @@ const Header = () => {
 
                 {/* Logo Area */}
                 <Link to="/" className="flex items-center gap-2">
-                    {/* Placeholder for Logo - extracting from design color */}
                     <div className="text-2xl font-serif font-bold text-primary tracking-tight">
-                        EduNet<span className="text-accent">.</span>
+                        {brand.logo_text}<span className="text-accent">{brand.logo_accent}</span>
                     </div>
                 </Link>
 
                 {/* Desktop Navigation */}
                 <nav className="hidden lg:flex items-center gap-8">
-                    {navLinks.map((link) => (
+                    {navLinks.map((link, i) => (
                         <Link
-                            key={link.name}
-                            to={link.path}
+                            key={i}
+                            to={link.path || '/'}
                             className={`text-sm font-medium transition-colors uppercase tracking-wide relative group ${location.pathname === link.path ? 'text-primary' : 'text-gray-700 hover:text-primary'}`}
                         >
                             {link.name}
@@ -47,7 +75,6 @@ const Header = () => {
                 </nav>
 
                 <div className="hidden lg:flex items-center gap-4">
-                    {/* Search and Tour removed as per request */}
                 </div>
 
                 {/* Mobile Menu Toggle */}
@@ -63,10 +90,10 @@ const Header = () => {
             {isMenuOpen && (
                 <div className="lg:hidden bg-white border-t border-gray-100 absolute w-full left-0 top-20 shadow-lg py-4">
                     <nav className="flex flex-col">
-                        {navLinks.map((link) => (
+                        {navLinks.map((link, i) => (
                             <Link
-                                key={link.name}
-                                to={link.path}
+                                key={i}
+                                to={link.path || '/'}
                                 className="px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
                                 onClick={() => setIsMenuOpen(false)}
                             >

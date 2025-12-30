@@ -123,14 +123,14 @@ const pageConfig = {
         border: 'border-rose-100',
         ring: 'group-hover:ring-rose-200'
     },
-    faculty: {
-        icon: Users,
-        description: 'Introduce your teaching staff and departments.',
-        label: 'Faculty',
-        color: 'text-cyan-600',
-        bg: 'bg-cyan-50',
-        border: 'border-cyan-100',
-        ring: 'group-hover:ring-cyan-200'
+    apply: {
+        icon: Send,
+        description: 'Customize the online application form and messages.',
+        label: 'Apply Page',
+        color: 'text-violet-600',
+        bg: 'bg-violet-50',
+        border: 'border-violet-100',
+        ring: 'group-hover:ring-violet-200'
     }
 };
 
@@ -151,9 +151,26 @@ const Editor = () => {
             if (response.ok) {
                 const data = await response.json();
 
+                // Core pages that should always appear (even if not in DB)
+                const corePages = ['home', 'header', 'footer', 'about', 'academics', 'admissions', 'facilities', 'contact', 'apply'];
+
+                // Create a map of existing pages from DB
+                const existingPages = {};
+                data.forEach(p => {
+                    existingPages[p.page_slug] = p;
+                });
+
+                // Merge: add core pages that don't exist in DB with 0 sections
+                const mergedPages = [...data];
+                corePages.forEach(slug => {
+                    if (!existingPages[slug]) {
+                        mergedPages.push({ page_slug: slug, section_count: 0 });
+                    }
+                });
+
                 // Sort pages: core pages first, then alphabetically
-                const coreOrder = ['home', 'header', 'footer', 'about', 'academics', 'facilities', 'activities', 'admissions'];
-                const sortedData = data.sort((a, b) => {
+                const coreOrder = ['home', 'header', 'footer', 'about', 'academics', 'admissions', 'facilities', 'contact', 'apply'];
+                const sortedData = mergedPages.sort((a, b) => {
                     const indexA = coreOrder.indexOf(a.page_slug);
                     const indexB = coreOrder.indexOf(b.page_slug);
                     if (indexA !== -1 && indexB !== -1) return indexA - indexB;

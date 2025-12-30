@@ -2,24 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 const Academies = ({ data, loading }) => {
-    // Default values for fallback
-    const academyData = data || {};
-    const tagline = academyData.tagline || 'Our Areas';
-    const title = academyData.title || 'Academies expertise';
-    const academies = academyData.academies || [
-        { id: '01', name: 'Arts and Humanities', image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=800&auto=format&fit=crop', description: "Fostering creativity and cultural understanding." },
-        { id: '02', name: 'Social Sciences', image: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800&auto=format&fit=crop', description: "Analyzing society and human relationships." },
-        { id: '03', name: 'Business and Management', image: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop', description: "Developing strategic leadership skills." },
-        { id: '04', name: 'Science and Technology', image: 'https://images.unsplash.com/photo-1564981797816-1043664bf78d?q=80&w=800&auto=format&fit=crop', description: "Pioneering innovation and discovery." },
-        { id: '05', name: 'Engineering and Technology', image: 'https://images.unsplash.com/photo-1581092160562-40aa08e78837?q=80&w=800&auto=format&fit=crop', description: "Building the infrastructure of tomorrow." },
-    ];
+    // If loading or no data, don't render
+    if (loading || !data) return null;
 
-    const [activeId, setActiveId] = useState(academies[1]?.id || '02');
+    const academies = data.academies || [];
+    if (academies.length === 0) return null;
+
+    const [activeId, setActiveId] = useState(academies[1]?.id || academies[0]?.id);
     const [isPaused, setIsPaused] = useState(false);
 
     // Auto-rotation logic
     useEffect(() => {
-        if (isPaused) return;
+        if (isPaused || academies.length === 0) return;
 
         const interval = setInterval(() => {
             setActiveId(prevId => {
@@ -42,10 +36,14 @@ const Academies = ({ data, loading }) => {
                         onMouseEnter={() => setIsPaused(true)}
                         onMouseLeave={() => setIsPaused(false)}
                     >
-                        <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{tagline}</span>
-                        <h2 className="text-4xl font-serif font-bold mb-12 text-gray-900">
-                            {title}
-                        </h2>
+                        {data.tagline && (
+                            <span className="text-primary font-bold tracking-widest text-xs uppercase mb-2 block">{data.tagline}</span>
+                        )}
+                        {data.title && (
+                            <h2 className="text-4xl font-serif font-bold mb-12 text-gray-900">
+                                {data.title}
+                            </h2>
+                        )}
 
                         <div className="space-y-4">
                             {academies.map((academy) => (

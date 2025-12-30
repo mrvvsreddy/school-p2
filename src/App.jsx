@@ -14,6 +14,7 @@ import Privacy from './pages/Privacy'
 
 import Facilities from './pages/Facilities'
 import Apply from './pages/Apply'
+import NotFound from './pages/NotFound'
 
 import { DataProvider } from './context/DataContext'
 import AdminLogin from './admin/Login'
@@ -32,6 +33,13 @@ import Admins from './admin/Admins'
 import Editor from './admin/editor'
 import HomePageEditor from './admin/editor/pages/home'
 import AboutPageEditor from './admin/editor/pages/about'
+import AcademicsPageEditor from './admin/editor/pages/academics'
+import AdmissionsPageEditor from './admin/editor/pages/admissions'
+import FacilitiesPageEditor from './admin/editor/pages/facilities'
+import ContactPageEditor from './admin/editor/pages/contact'
+import ApplyPageEditor from './admin/editor/pages/apply'
+import HeaderPageEditor from './admin/editor/pages/header'
+import FooterPageEditor from './admin/editor/pages/footer'
 
 function App() {
     return (
@@ -66,7 +74,6 @@ function App() {
                         <Route path="inquiries" element={<Inquiries />} />
                         <Route path="admissions" element={<AdmissionRequests />} />
                         <Route path="contacts" element={<ContactRequests />} />
-                        <Route path="contacts" element={<ContactRequests />} />
                         <Route path="settings" element={<Settings />} />
                         <Route path="admins" element={<Admins />} />
                     </Route>
@@ -74,6 +81,16 @@ function App() {
                     <Route path="/admin/editor" element={<Editor />} />
                     <Route path="/admin/editor/home" element={<HomePageEditor />} />
                     <Route path="/admin/editor/about" element={<AboutPageEditor />} />
+                    <Route path="/admin/editor/academics" element={<AcademicsPageEditor />} />
+                    <Route path="/admin/editor/admissions" element={<AdmissionsPageEditor />} />
+                    <Route path="/admin/editor/facilities" element={<FacilitiesPageEditor />} />
+                    <Route path="/admin/editor/contact" element={<ContactPageEditor />} />
+                    <Route path="/admin/editor/apply" element={<ApplyPageEditor />} />
+                    <Route path="/admin/editor/header" element={<HeaderPageEditor />} />
+                    <Route path="/admin/editor/footer" element={<FooterPageEditor />} />
+
+                    {/* 404 Catch-All Route - Must be last */}
+                    <Route path="*" element={<NotFound />} />
                 </Routes>
             </div>
         </DataProvider>
