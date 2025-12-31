@@ -3,6 +3,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "School P2 Backend"
     API_V1_STR: str = "/api/v1"
+    
+    # Environment: "development" or "production"
+    ENVIRONMENT: str = "development"
+    
     # CORS Origins: List of allowed origins. 
     # In production, replace '*' with specific domains.
     CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
@@ -19,6 +23,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change_this_to_a_secure_random_string_in_production"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 240 # 4 hours
+    
+    @property
+    def is_production(self) -> bool:
+        return self.ENVIRONMENT.lower() == "production"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True, extra="ignore")
 

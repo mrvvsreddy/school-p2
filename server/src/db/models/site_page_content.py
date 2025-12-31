@@ -1,7 +1,7 @@
 """
 Site Pages Content Model - stores JSON content for different page sections
 """
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Index
 from sqlalchemy.sql import func
 from src.db.base import Base
 
@@ -18,5 +18,11 @@ class SitePageContent(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
+    # Composite index for optimized public page queries - O(log n) lookup
+    __table_args__ = (
+        Index('ix_page_active_order', 'page_slug', 'is_active', 'order_index'),
+    )
+    
     def __repr__(self):
         return f"<SitePageContent {self.page_slug}/{self.section_key}>"
+

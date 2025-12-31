@@ -1,31 +1,39 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import structlog
+import time
 
 from src.core.config import settings
 from src.core.logging import setup_logging
 from src.api.v1.endpoints import health, auth
 
-# Initialize logging
-setup_logging()
+# Initialize logging (dev_mode in development, JSON in production)
+setup_logging(dev_mode=not settings.is_production)
 logger = structlog.get_logger()
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-import time
+
+# Skip logging for these paths (noisy/health checks)
+SKIP_LOG_PATHS = {"/", "/favicon.ico", "/api/v1/health"}
+
 
 @app.middleware("http")
-async def log_requests(request, call_next):
+async def log_requests(request: Request, call_next):
     """
-    Middleware to log all requests with method, path, status, and duration.
+    Middleware to log all API requests with clean, readable format.
+    Logs: method, path, status, duration, and highlights slow requests.
     """
+    # Skip noisy paths
+    if request.url.path in SKIP_LOG_PATHS:
+        return await call_next(request)
+    
     start_time = time.time()
     
     # Process request
@@ -34,19 +42,30 @@ async def log_requests(request, call_next):
     # Calculate duration
     duration_ms = (time.time() - start_time) * 1000
     
-    # Get client IP
-    client_ip = request.client.host if request.client else "unknown"
+    # Determine log level based on status and duration
+    status = response.status_code
+    is_error = status >= 400
+    is_slow = duration_ms > 500  # Flag requests over 500ms as slow
     
-    # Log the request details
-    logger.info(
-        "request_complete",
-        method=request.method,
-        path=request.url.path,
-        status_code=response.status_code,
-        duration_ms=round(duration_ms, 2),
-        client_ip=client_ip,
-        user_agent=request.headers.get("user-agent", "unknown")[:50]
-    )
+    # Build log message
+    log_data = {
+        "method": request.method,
+        "path": request.url.path,
+        "status": status,
+        "ms": round(duration_ms, 1),
+    }
+    
+    # Add query params if present
+    if request.url.query:
+        log_data["query"] = request.url.query[:100]  # Truncate long queries
+    
+    # Log with appropriate level
+    if is_error:
+        logger.warning("api_request", **log_data)
+    elif is_slow:
+        logger.warning("slow_request", **log_data)
+    else:
+        logger.info("api_request", **log_data)
     
     return response
 
@@ -158,8 +177,13 @@ async def start_keep_alive():
     """
     Starts a background task to ping the server every 30 seconds
     to prevent Render from spinning down the free tier instance.
-    Checks RENDER_EXTERNAL_URL env var.
+    Only runs in production environment with RENDER_EXTERNAL_URL set.
     """
+    # Only run in production
+    if not settings.is_production:
+        logger.info("Keep-alive: Skipping in development mode.")
+        return
+    
     if not settings.RENDER_EXTERNAL_URL:
         logger.info("Keep-alive: RENDER_EXTERNAL_URL not set, skipping self-ping.")
         return

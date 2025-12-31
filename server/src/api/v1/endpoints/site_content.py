@@ -3,12 +3,13 @@ Site Pages Content CRUD API Endpoints
 """
 import structlog
 import json
+import time
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional, List, Any, Dict
 from datetime import datetime
 
 from src.db.session import get_db
@@ -19,6 +20,37 @@ from src.api.v1.deps import require_permission
 logger = structlog.get_logger()
 router = APIRouter()
 
+# ==================== IN-MEMORY CACHE ====================
+# Simple TTL-based cache for O(1) retrieval of frequently accessed pages
+_page_cache: Dict[str, dict] = {}
+CACHE_TTL_SECONDS = 300  # 5 minutes cache
+
+
+def get_cached_page(page_slug: str) -> Optional[List[dict]]:
+    """Get page from cache if valid (O(1) lookup)"""
+    if page_slug in _page_cache:
+        cached = _page_cache[page_slug]
+        if time.time() - cached["timestamp"] < CACHE_TTL_SECONDS:
+            return cached["data"]
+        # Cache expired, remove it
+        del _page_cache[page_slug]
+    return None
+
+
+def set_cached_page(page_slug: str, data: List[dict]):
+    """Store page in cache"""
+    _page_cache[page_slug] = {
+        "data": data,
+        "timestamp": time.time()
+    }
+
+
+def invalidate_cache(page_slug: str = None):
+    """Invalidate cache for a page or all pages"""
+    if page_slug:
+        _page_cache.pop(page_slug, None)
+    else:
+        _page_cache.clear()
 
 # Pydantic schemas
 class PageContentCreate(BaseModel):
@@ -28,12 +60,10 @@ class PageContentCreate(BaseModel):
     order_index: int = 0
     is_active: bool = True
 
-
 class PageContentUpdate(BaseModel):
     content: Optional[dict] = None
     order_index: Optional[int] = None
     is_active: Optional[bool] = None
-
 
 class PageContentResponse(BaseModel):
     id: int
@@ -53,7 +83,6 @@ class PageSummary(BaseModel):
     page_slug: str
     section_count: int
     
-
 @router.get("/pages", response_model=List[PageSummary])
 async def list_pages(
     db: AsyncSession = Depends(get_db),
@@ -70,7 +99,6 @@ async def list_pages(
     
     return [{"page_slug": row[0], "section_count": row[1]} for row in rows]
 
-
 # ==================== PUBLIC ENDPOINTS (No Auth Required) ====================
 
 @router.get("/public/{page_slug}", response_model=List[PageContentResponse])
@@ -78,7 +106,19 @@ async def get_public_page_content(
     page_slug: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """Get page content for public display (no auth required)"""
+    """
+    Get page content for public display (no auth required).
+    
+    Performance: O(1) cache hit, O(log n) database lookup on cache miss.
+    Uses composite index on (page_slug, is_active, order_index).
+    """
+    # Check cache first (O(1) lookup)
+    cached = get_cached_page(page_slug)
+    if cached is not None:
+        logger.debug("Cache hit", page_slug=page_slug)
+        return cached
+    
+    # Cache miss - query database (O(log n) with index)
     query = select(SitePageContent).filter(
         SitePageContent.page_slug == page_slug,
         SitePageContent.is_active == True
@@ -103,11 +143,13 @@ async def get_public_page_content(
             "updated_at": section.updated_at
         })
     
+    # Store in cache for future requests
+    set_cached_page(page_slug, response)
+    logger.debug("Cache miss, stored", page_slug=page_slug)
+    
     return response
 
-
 # ==================== ADMIN ENDPOINTS (Auth Required) ====================
-
 
 @router.get("/pages/{page_slug}", response_model=List[PageContentResponse])
 async def get_page_sections(
@@ -141,7 +183,6 @@ async def get_page_sections(
     
     return response
 
-
 @router.get("/sections/{section_id}", response_model=PageContentResponse)
 async def get_section(
     section_id: int,
@@ -171,7 +212,6 @@ async def get_section(
         "updated_at": section.updated_at
     }
 
-
 @router.post("/sections", response_model=PageContentResponse, status_code=201)
 async def create_section(
     data: PageContentCreate,
@@ -191,6 +231,9 @@ async def create_section(
     await db.commit()
     await db.refresh(new_section)
     
+    # Invalidate cache for this page
+    invalidate_cache(data.page_slug)
+    
     logger.info("Section created", page=data.page_slug, section=data.section_key)
     
     return {
@@ -203,7 +246,6 @@ async def create_section(
         "created_at": new_section.created_at,
         "updated_at": new_section.updated_at
     }
-
 
 @router.put("/sections/{section_id}", response_model=PageContentResponse)
 async def update_section(
@@ -229,6 +271,9 @@ async def update_section(
     await db.commit()
     await db.refresh(section)
     
+    # Invalidate cache for this page
+    invalidate_cache(section.page_slug)
+    
     content = section.content
     if isinstance(content, str):
         content = json.loads(content)
@@ -246,7 +291,6 @@ async def update_section(
         "updated_at": section.updated_at
     }
 
-
 @router.delete("/sections/{section_id}", status_code=204)
 async def delete_section(
     section_id: int,
@@ -260,15 +304,17 @@ async def delete_section(
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
     
+    page_slug = section.page_slug  # Store before delete
     await db.delete(section)
     await db.commit()
+    
+    # Invalidate cache for this page
+    invalidate_cache(page_slug)
     
     logger.info("Section deleted", section_id=section_id)
     return None
 
-
 # ==================== SEED ENDPOINTS ====================
-
 ADMISSIONS_SEED_DATA = [
     {
         "page_slug": "admissions",

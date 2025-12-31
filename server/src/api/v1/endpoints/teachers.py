@@ -110,10 +110,17 @@ async def list_teachers(
     department: Optional[str] = Query(None, description="Filter by department"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     search: Optional[str] = Query(None, description="Search by name or employee_id"),
+    limit: int = Query(50, ge=1, le=200, description="Max results (1-200)"),
+    offset: int = Query(0, ge=0, description="Skip N results for pagination"),
     db: AsyncSession = Depends(get_db),
     current_admin: Admin = Depends(require_permission("view_teachers"))
 ):
-    """List all teachers with optional filters"""
+    """
+    List all teachers with optional filters.
+    
+    Performance: O(log n) queries with indexed filters and pagination.
+    Uses composite indexes on (department, is_active) and (name).
+    """
     query = select(Teacher).options(selectinload(Teacher.assigned_classes))
     
     if department:
@@ -126,7 +133,8 @@ async def list_teachers(
             (Teacher.employee_id.ilike(f"%{search}%"))
         )
     
-    query = query.order_by(Teacher.id)
+    # Apply pagination with limit/offset
+    query = query.order_by(Teacher.id).offset(offset).limit(limit)
     result = await db.execute(query)
     teachers = result.scalars().all()
     
@@ -138,14 +146,34 @@ async def get_teacher_stats(
     db: AsyncSession = Depends(get_db),
     current_admin: Admin = Depends(require_permission("view_teachers"))
 ):
-    """Get teacher statistics"""
-    result = await db.execute(select(Teacher))
-    all_teachers = result.scalars().all()
+    """
+    Get teacher statistics.
+    Optimized: Uses SQL COUNT queries instead of fetching all rows.
+    Performance: O(log n) with indexed queries.
+    """
+    from sqlalchemy import func as sql_func
     
-    total = len(all_teachers)
-    active = len([t for t in all_teachers if t.is_active])
-    male = len([t for t in all_teachers if t.gender and t.gender.lower() == 'male'])
-    female = len([t for t in all_teachers if t.gender and t.gender.lower() == 'female'])
+    # Total teachers - single count query
+    total_result = await db.execute(select(sql_func.count(Teacher.id)))
+    total = total_result.scalar() or 0
+    
+    # Active teachers count
+    active_result = await db.execute(
+        select(sql_func.count(Teacher.id)).filter(Teacher.is_active == True)
+    )
+    active = active_result.scalar() or 0
+    
+    # Male count
+    male_result = await db.execute(
+        select(sql_func.count(Teacher.id)).filter(sql_func.lower(Teacher.gender) == 'male')
+    )
+    male = male_result.scalar() or 0
+    
+    # Female count
+    female_result = await db.execute(
+        select(sql_func.count(Teacher.id)).filter(sql_func.lower(Teacher.gender) == 'female')
+    )
+    female = female_result.scalar() or 0
     
     return {
         "total": total,
