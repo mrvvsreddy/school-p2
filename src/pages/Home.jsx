@@ -9,7 +9,7 @@ import FadeIn from '../components/UI/FadeIn';
 import PageLoader from '../components/UI/PageLoader';
 import ErrorPage from './ErrorPage';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
 
 const Home = () => {
   const [content, setContent] = useState({});

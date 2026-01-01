@@ -13,7 +13,7 @@ const Footer = () => {
 
     const fetchFooterContent = async () => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/site-content/public/footer`);
+            const response = await fetch(`${import.meta.env.VITE_SERVER_URL}/api/v1/site-content/public/footer`);
             if (response.ok) {
                 const data = await response.json();
                 const parsed = {};

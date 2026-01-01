@@ -11,6 +11,7 @@ import Academics from './pages/Academics'
 import Faculty from './pages/Faculty'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
+import Overview from './pages/Overview'
 
 import Facilities from './pages/Facilities'
 import Apply from './pages/Apply'
@@ -62,6 +63,7 @@ function App() {
                     <Route path="/faculty" element={<Layout><Faculty /></Layout>} />
                     <Route path="/contact" element={<Layout><Contact /></Layout>} />
                     <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+                    <Route path="/overview" element={<Layout><Overview /></Layout>} />
 
                     {/* Admin Routes */}
                     <Route path="/admin/login" element={<AdminLogin />} />

@@ -21,7 +21,7 @@ const AdminLogin = () => {
             formDataPayload.append('username', formData.username);
             formDataPayload.append('password', formData.password);
 
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const apiUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:8000';
             const response = await fetch(`${apiUrl}/api/v1/login/access-token`, {
                 method: 'POST',
                 body: formDataPayload,

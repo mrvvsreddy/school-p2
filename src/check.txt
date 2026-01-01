@@ -1,7 +1,0 @@
-export default {
-    // ...
-    // Note: App.jsx already includes HelmetProvider. 
-    // In entry-server.jsx we wrap App with another HelmetProvider? 
-    // No, App.jsx has HelmetProvider inside. 
-    // We should remove HelmetProvider from App.jsx and put it in entry-client/server to handle context correctly.
-}
