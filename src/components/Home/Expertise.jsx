@@ -1,26 +1,43 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HiPlus, HiMinus } from 'react-icons/hi';
+import { AlertTriangle } from 'lucide-react';
 
-const Expertise = () => {
-    const categories = [
-        { id: '01.', title: 'Arts and Humanities', desc: 'Explore the depths of human culture and expression.' },
-        { id: '02.', title: 'Social Sciences', desc: 'Designed to help students develop skills in research and analysis.' },
-        { id: '03.', title: 'Business and Management', desc: 'Learn the strategies that drive modern global economies.' },
-        { id: '04.', title: 'Science and Technology', desc: 'Pushing the boundaries of innovation and discovery.' },
-        { id: '05.', title: 'Engineering and Technology', desc: 'Building the future with cutting-edge engineering solutions.' },
-    ];
+const Expertise = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="py-24 bg-edu-gray">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load Expertise Section</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
 
-    const [activeId, setActiveId] = useState('02.');
+    // If loading or no data, don't render
+    if (loading || !data) return null;
+
+    const categories = data.categories;
+    const partners = data.partners;
+    if (!categories || categories.length === 0) return null;
+
+    const [activeId, setActiveId] = useState(categories[1]?.id || categories[0]?.id);
 
     return (
         <section className="py-24 bg-edu-gray">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mb-16">
-                    <span className="text-edu-red font-bold uppercase tracking-widest text-xs">Our Focus</span>
-                    <h2 className="text-4xl lg:text-5xl font-serif font-bold text-edu-dark mt-4">
-                        Academies <span className="underline decoration-edu-red/30 underline-offset-8">expertise</span>
-                    </h2>
+                    {data.tagline && (
+                        <span className="text-edu-red font-bold uppercase tracking-widest text-xs">{data.tagline}</span>
+                    )}
+                    {data.title && (
+                        <h2 className="text-4xl lg:text-5xl font-serif font-bold text-edu-dark mt-4">
+                            {data.title}
+                        </h2>
+                    )}
                 </div>
 
                 <div className="space-y-2">
@@ -58,12 +75,13 @@ const Expertise = () => {
                 </div>
 
                 {/* Logos underneath */}
-                <div className="mt-20 flex flex-wrap justify-between items-center gap-8 grayscale opacity-50">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" alt="Partner 1" className="h-8 md:h-10" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Partner 2" className="h-8 md:h-10" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/IBM_logo.svg" alt="Partner 3" className="h-8 md:h-10" />
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" alt="Partner 4" className="h-8 md:h-10" />
-                </div>
+                {partners && partners.length > 0 && (
+                    <div className="mt-20 flex flex-wrap justify-between items-center gap-8 grayscale opacity-50">
+                        {partners.map((partner, index) => (
+                            <img key={index} src={partner.logo} alt={partner.name} className="h-8 md:h-10" />
+                        ))}
+                    </div>
+                )}
 
             </div>
         </section>

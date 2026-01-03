@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle } from 'lucide-react';
 
-const Academies = ({ data, loading }) => {
+const Academies = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="py-24 bg-gray-50">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load Academies Section</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
     // If loading or no data, don't render
     if (loading || !data) return null;
 
-    const academies = data.academies || [];
-    if (academies.length === 0) return null;
+    const academies = data.academies;
+    if (!academies || academies.length === 0) return null;
 
     const [activeId, setActiveId] = useState(academies[1]?.id || academies[0]?.id);
     const [isPaused, setIsPaused] = useState(false);
@@ -84,7 +97,6 @@ const Academies = ({ data, loading }) => {
                                     src={academy.image}
                                     alt={academy.name}
                                     className="w-full h-full object-cover transform scale-105 transition-transform duration-[10000ms] ease-out"
-                                    onError={(e) => { e.target.src = 'https://placehold.co/800x600/6d0b1a/white?text=Academy+Context' }}
                                 />
                                 <div className="absolute inset-0 bg-primary/20 mix-blend-multiply"></div>
 

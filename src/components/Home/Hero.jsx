@@ -1,8 +1,21 @@
 import React from 'react';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const Hero = ({ data, loading }) => {
+const Hero = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="bg-gradient-to-br from-white to-gray-50 py-24">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load Hero Section</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
     // If loading or no data, don't render
     if (loading || !data) return null;
 
@@ -50,7 +63,6 @@ const Hero = ({ data, loading }) => {
                                     src={data.image}
                                     alt="Student walking on campus"
                                     className="w-full h-full object-cover"
-                                    onError={(e) => { e.target.src = 'https://placehold.co/800x600/6d0b1a/white?text=EduNet+Student' }}
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
                             </div>

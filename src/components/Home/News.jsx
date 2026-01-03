@@ -1,12 +1,25 @@
 import React from 'react';
-import { Calendar } from 'lucide-react';
+import { Calendar, AlertTriangle } from 'lucide-react';
 
-const News = ({ data, loading }) => {
+const News = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="py-20 bg-white">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load News Section</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
     // If loading or no data, don't render
     if (loading || !data) return null;
 
-    const items = data.items || [];
-    if (items.length === 0) return null;
+    const items = data.items;
+    if (!items || items.length === 0) return null;
 
     return (
         <section className="py-20 bg-white">
@@ -29,7 +42,6 @@ const News = ({ data, loading }) => {
                                         src={item.image}
                                         alt={item.title || 'News'}
                                         className="w-full h-64 object-cover transform group-hover:scale-110 transition-transform duration-500"
-                                        onError={(e) => { e.target.src = 'https://placehold.co/600x400/6d0b1a/white?text=EduNet+News' }}
                                     />
                                 )}
                                 {item.date && item.month && (
@@ -45,10 +57,12 @@ const News = ({ data, loading }) => {
                                         {item.title} {item.subtitle && `(${item.subtitle})`}
                                     </h3>
                                 )}
-                                <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-widest">
-                                    <Calendar size={12} />
-                                    <span>Last updated: Dec 30, 2024</span>
-                                </div>
+                                {item.lastUpdated && (
+                                    <div className="flex items-center gap-2 text-xs text-gray-500 uppercase tracking-widest">
+                                        <Calendar size={12} />
+                                        <span>Last updated: {item.lastUpdated}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}

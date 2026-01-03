@@ -1,10 +1,24 @@
 import React from 'react';
+import { AlertTriangle } from 'lucide-react';
 
-const FounderMessage = ({ data, loading }) => {
+const FounderMessage = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="py-16 bg-white">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load Founder Message</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
     // If loading or no data, don't render
     if (loading || !data) return null;
 
-    const founder = data.founder || {};
+    const founder = data.founder;
     const mainImage = data.images?.main;
 
     return (
@@ -22,7 +36,6 @@ const FounderMessage = ({ data, loading }) => {
                                         src={mainImage}
                                         alt="Founder"
                                         className="w-full h-full object-cover"
-                                        onError={(e) => { e.target.src = 'https://placehold.co/400x400/f3f4f6/6d0b1a?text=Founder' }}
                                     />
                                 </div>
                             </div>
@@ -77,7 +90,6 @@ const FounderMessage = ({ data, loading }) => {
                                         src={founder.image}
                                         alt={founder.name}
                                         className="w-12 h-12 rounded-full object-cover border-2 border-primary p-0.5"
-                                        onError={(e) => { e.target.src = 'https://placehold.co/100x100/6d0b1a/white?text=F' }}
                                     />
                                 )}
                                 <div>

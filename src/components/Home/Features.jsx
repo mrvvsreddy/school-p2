@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, ArrowRight, Trophy, Users, Globe } from 'lucide-react';
+import { GraduationCap, ArrowRight, Trophy, Users, Globe, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const iconMap = {
@@ -9,12 +9,25 @@ const iconMap = {
     Trophy: Trophy
 };
 
-const Features = ({ data, loading }) => {
+const Features = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="bg-[#580000] text-white py-24">
+                <div className="container mx-auto px-4 md:px-6 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-300 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold mb-2">Failed to Load Features Section</h2>
+                    <p className="text-white/70">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
     // If loading or no data, don't render
     if (loading || !data) return null;
 
-    const features = data.features || [];
-    const stats = data.stats || [];
+    const features = data.features;
+    const stats = data.stats;
 
     return (
         <section className="bg-[#580000] text-white py-24 relative overflow-hidden">
@@ -49,8 +62,9 @@ const Features = ({ data, loading }) => {
 
                 {features.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {features.map((feature, index) => {
-                            const IconComponent = iconMap[feature.icon] || GraduationCap;
+                        {features?.map((feature, index) => {
+                            const IconComponent = iconMap[feature.icon];
+                            if (!IconComponent) return null;
                             return (
                                 <div key={index} className="group bg-white/5 backdrop-blur-sm border border-white/10 p-8 hover:bg-white transition-all duration-500 rounded-sm hover:-translate-y-2 hover:shadow-2xl cursor-pointer">
                                     <div className="mb-8 p-4 inline-block rounded-full bg-white/10 group-hover:bg-primary/10 text-white group-hover:text-primary transition-colors duration-500">
@@ -79,8 +93,9 @@ const Features = ({ data, loading }) => {
                 {/* Bottom Stats Strip */}
                 {stats.length > 0 && (
                     <div className="mt-20 border-t border-white/10 pt-10 flex flex-wrap justify-center md:justify-between items-center gap-8 opacity-80">
-                        {stats.map((stat, index) => {
-                            const StatIcon = iconMap[stat.icon] || Trophy;
+                        {stats?.map((stat, index) => {
+                            const StatIcon = iconMap[stat.icon];
+                            if (!StatIcon) return null;
                             return (
                                 <div key={index} className="flex items-center gap-3">
                                     <StatIcon size={20} className="text-accent" />

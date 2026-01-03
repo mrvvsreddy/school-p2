@@ -1,13 +1,26 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { AlertTriangle } from 'lucide-react';
 
-const Gallery = () => {
-    // Using placeholder images for diverse students
-    const images = [
-        "https://images.unsplash.com/photo-1523240795612-9a054b0db644?q=80&w=2670&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1544963223-385208757041?q=80&w=2670&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=2670&auto=format&fit=crop"
-    ];
+const Gallery = ({ data, loading, error }) => {
+    // Show error state
+    if (error) {
+        return (
+            <section className="py-24 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif font-bold text-gray-900 mb-2">Failed to Load Gallery</h2>
+                    <p className="text-gray-600">{error}</p>
+                </div>
+            </section>
+        );
+    }
+
+    // If loading or no data, don't render
+    if (loading || !data) return null;
+
+    const images = data.images;
+    if (!images || images.length === 0) return null;
 
     return (
         <section className="py-24 bg-white overflow-hidden">
